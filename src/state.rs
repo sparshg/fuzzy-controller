@@ -25,7 +25,7 @@ impl State {
     pub fn update(&mut self, (v, vdot, w, wdot): (Vec2, Vec2, f32, f32), dt: f32) {
         self.w += wdot * dt;
         self.th += w * dt;
-        self.th = (self.th % (2. * PI) + 2. * PI) % (2. * PI);
+        // self.th = (self.th % (2. * PI) + 2. * PI) % (2. * PI);
         self.v += vdot * dt;
         self.x += v * dt;
     }

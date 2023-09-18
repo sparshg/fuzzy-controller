@@ -1,5 +1,6 @@
 mod bezier;
 mod drone;
+mod pid;
 mod state;
 use std::f32::consts::PI;
 
@@ -8,6 +9,7 @@ use macroquad_particles::{self as particles, Emitter, EmitterConfig};
 use drone::Drone;
 use macroquad::prelude::*;
 use particles::{ColorCurve, Curve};
+use pid::PID;
 
 fn smoke() -> particles::EmitterConfig {
     particles::EmitterConfig {
@@ -63,11 +65,11 @@ async fn main() {
         ..smoke()
     });
     let mut drone = Drone::new(e1, e2);
+    set_camera(&Camera2D {
+        zoom: vec2(100. / screen_width(), 100. / screen_height()),
+        ..Default::default()
+    });
     loop {
-        set_camera(&Camera2D {
-            zoom: vec2(100. / screen_width(), 100. / screen_height()),
-            ..Default::default()
-        });
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
             break;
         }
