@@ -23,6 +23,7 @@ pub struct Drone {
     pid1: PID,
     pid2: PID,
     pid3: PID,
+    point: Vec2,
 }
 
 // impl Default for Drone {
@@ -52,6 +53,7 @@ impl Drone {
             pid1: PID::new(4., 2., 2.),
             pid2: PID::new(0.1, 0., 0.15),
             pid3: PID::new(5., 0., 2.),
+            point: vec2(0., 0.),
             // ..Default::default()
         }
     }
@@ -73,31 +75,38 @@ impl Drone {
                 //             - self.state.w * self.pid.2))
                 //         .clamp(-self.Fclamp, self.Fclamp);
             }
-            (self.Tl, self.Tr) = (0., 0.);
-            if is_key_down(KeyCode::Left) {
-                //     self.int = 0.
-                self.Tl = self.t_m * 12.;
+            // (self.Tl, self.Tr) = (0., 0.);
+            // if is_key_down(KeyCode::Left) {
+            //     self.int = 0.
+            //     self.Tl = self.t_m * 12.;
+            // }
+            // if is_key_down(KeyCode::Right) {
+            //     self.Tr = self.t_m * 12.;
+            //     self.F = self.Finp;
+            //     self.int = 0.
+            // }
+            if is_mouse_button_down(MouseButton::Left) {
+                self.point = vec2(
+                    mouse_position_local().x * screen_width() * 0.01,
+                    mouse_position_local().y * screen_height() * 0.01,
+                    // 5., 4.,
+                );
             }
-            if is_key_down(KeyCode::Right) {
-                self.Tr = self.t_m * 12.;
-                //     self.F = self.Finp;
-                //     self.int = 0.
-            }
-            let (a, b) = (
-                mouse_position_local().x * screen_width() * 0.01,
-                -mouse_position_local().y * screen_height() * 0.01,
-                // 5., 4.,
-            );
-            let amp = self.pid1.output(self.state.x.y + b, dt).clamp(0., 20.);
-            let o1 = self.pid2.output(self.state.x.x - a, dt).clamp(-0.8, 0.8);
+            let amp = self
+                .pid1
+                .output(self.state.x.y - self.point.y, dt)
+                .clamp(0., 20.);
+            let o1 = self
+                .pid2
+                .output(self.state.x.x - self.point.x, dt)
+                .clamp(-0.8, 0.8);
             // self.state.th = o1;
             let diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
-            println!("{}\t{}", o1, diff);
             // let diff = 0. as f32;
             self.Tl = self.t_m * (amp - diff).max(0.);
             self.Tr = self.t_m * (amp + diff).max(0.);
-            self.smoke1.config.emitting = self.Tl > 0.;
-            self.smoke2.config.emitting = self.Tr > 0.;
+            self.smoke1.config.amount = (self.Tl * 0.5) as u32;
+            self.smoke2.config.amount = (self.Tr * 0.5) as u32;
             let k1 = self.process_state(self.state);
             let k2 = self.process_state(self.state.after(k1, dt * 0.5));
             let k3 = self.process_state(self.state.after(k2, dt * 0.5));
@@ -163,13 +172,7 @@ impl Drone {
 
         draw_line(x, y, x - dx, y - dy, thickness, color);
         draw_circle(x - dx, y - dy, 0.1, color);
-        draw_circle(
-            // 5., -4.,
-            mouse_position_local().x * screen_width() * 0.01,
-            mouse_position_local().y * screen_height() * 0.01,
-            0.1,
-            color,
-        );
+        draw_circle(self.point.x, self.point.y, 0.1, color);
         // println!("x: {}, y: {}, th: {}, w: {}", x, y, th, self.state.w);
     }
 }

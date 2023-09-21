@@ -1,5 +1,6 @@
 mod bezier;
 mod drone;
+mod fuzzy;
 mod pid;
 mod state;
 use std::f32::consts::PI;
