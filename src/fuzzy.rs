@@ -1,21 +1,18 @@
 use std::{collections::HashMap, hash::Hash, ops::Range};
-
-pub struct Fuzzy<T, V>
+pub struct Fuzzy<V>
 where
-    T: Fn(f32) -> f32,
     V: Eq + Hash + Copy,
 {
     members: usize,
-    functions: HashMap<V, T>,
+    pub functions: HashMap<V, fn(f32) -> f32>,
     range: Range<f32>,
 }
 
-impl<T, V> Fuzzy<T, V>
+impl<V> Fuzzy<V>
 where
-    T: Fn(f32) -> f32,
     V: Eq + Hash + Copy,
 {
-    pub fn new(functions: HashMap<V, T>) -> Fuzzy<T, V> {
+    pub fn new(functions: HashMap<V, fn(f32) -> f32>) -> Fuzzy<V> {
         Fuzzy {
             members: functions.len(),
             functions,
@@ -36,7 +33,7 @@ where
         result
     }
 
-    pub fn defuzzify(&self, acuts: HashMap<V, f32>, resolution: usize) -> (f32, f32) {
+    pub fn defuzzify(&self, acuts: HashMap<V, f32>, resolution: usize) -> f32 {
         if acuts.len() != self.members {
             panic!(
                 "Length of alpha cuts ({}) != Length of membership functions ({})",
@@ -44,7 +41,7 @@ where
                 self.members
             );
         }
-        let (mut mx, mut my, mut m) = (0., 0., 0.);
+        let (mut mx, mut m) = (0., 0.);
         for i in 0..=resolution {
             let x = (i as f32 / resolution as f32) * (self.range.end - self.range.start)
                 + self.range.start;
@@ -52,11 +49,9 @@ where
                 .iter()
                 .fold(0f32, |acc, (l, &a)| acc.max(self.functions[l](x).min(a)));
             mx += y * x;
-            my += y * y;
             m += y;
         }
         mx /= m;
-        my /= m;
-        (mx, my)
+        mx
     }
 }

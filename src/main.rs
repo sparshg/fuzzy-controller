@@ -1,14 +1,17 @@
 mod bezier;
 mod drone;
 mod fuzzy;
+mod mie;
 mod pid;
 mod state;
-use std::f32::consts::PI;
+use std::{collections::HashMap, f32::consts::PI};
 
+use fuzzy::Fuzzy;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
 
 use drone::Drone;
 use macroquad::prelude::*;
+use mie::{Food, InputType, Inputs, Mamdani, Y};
 use particles::{ColorCurve, Curve};
 use pid::PID;
 
@@ -70,6 +73,29 @@ async fn main() {
         zoom: vec2(100. / screen_width(), 100. / screen_height()),
         ..Default::default()
     });
+    let m = Mamdani {
+        rules: vec![Z],
+        inputs: HashMap::from([(
+            InputType::Y,
+            Fuzzy::new(HashMap::from([
+                (
+                    Inputs::Y(Y::Neg),
+                    (|x| if x > 0. { 3. } else { 2. }) as fn(f32) -> f32,
+                ),
+                (Inputs::Y(Y::Zero), |x| 1. - x),
+                (Inputs::Y(Y::Pos), |x| 1. - x),
+            ])),
+        )]),
+        output: Fuzzy::new(HashMap::from([
+            (
+                Inputs::Y(Y::Neg),
+                (|x| if x > 0. { 3. } else { 2. }) as fn(f32) -> f32,
+            ),
+            (Inputs::Y(Y::Zero), |x| 1. - x),
+            (Inputs::Y(Y::Pos), |x| 1. - x),
+        ])),
+    };
+
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
             break;
