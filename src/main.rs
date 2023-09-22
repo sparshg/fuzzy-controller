@@ -1,17 +1,20 @@
 mod bezier;
 mod drone;
+mod funcs;
 mod fuzzy;
 mod mie;
 mod pid;
 mod state;
 use std::{collections::HashMap, f32::consts::PI};
 
+use bezier::Bezier;
+use funcs::tri;
 use fuzzy::Fuzzy;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
 
 use drone::Drone;
 use macroquad::prelude::*;
-use mie::{Food, InputType, Inputs, Mamdani, Y};
+use mie::{InputType, Inputs, Mamdani, Output, Y};
 use particles::{ColorCurve, Curve};
 use pid::PID;
 
@@ -74,25 +77,23 @@ async fn main() {
         ..Default::default()
     });
     let m = Mamdani {
-        rules: vec![Z],
+        rules: HashMap::from([
+            (Output::None, !Inputs::Y(Y::Pos)),
+            (Output::Small, !Inputs::Y(Y::Neg)),
+            (Output::Large, Inputs::Y(Y::Pos).into()),
+        ]),
         inputs: HashMap::from([(
             InputType::Y,
             Fuzzy::new(HashMap::from([
-                (
-                    Inputs::Y(Y::Neg),
-                    (|x| if x > 0. { 3. } else { 2. }) as fn(f32) -> f32,
-                ),
-                (Inputs::Y(Y::Zero), |x| 1. - x),
-                (Inputs::Y(Y::Pos), |x| 1. - x),
+                (Inputs::Y(Y::Neg), tri(0.0, 0.25, 0.5)),
+                (Inputs::Y(Y::Zero), tri(0.25, 0.5, 0.75)),
+                (Inputs::Y(Y::Pos), tri(0.5, 0.75, 1.0)),
             ])),
         )]),
         output: Fuzzy::new(HashMap::from([
-            (
-                Inputs::Y(Y::Neg),
-                (|x| if x > 0. { 3. } else { 2. }) as fn(f32) -> f32,
-            ),
-            (Inputs::Y(Y::Zero), |x| 1. - x),
-            (Inputs::Y(Y::Pos), |x| 1. - x),
+            (Output::None, tri(0.0, 0.25, 0.5)),
+            (Output::Small, tri(0.25, 0.5, 0.75)),
+            (Output::Large, tri(0.5, 0.75, 1.0)),
         ])),
     };
 

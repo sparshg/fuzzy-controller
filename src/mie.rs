@@ -23,7 +23,11 @@ pub enum Inputs {
     // F(Food),
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum Output {}
+pub enum Output {
+    None,
+    Small,
+    Large,
+}
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Y {
@@ -39,6 +43,12 @@ pub enum Y {
 // }
 #[derive(Debug)]
 pub struct Rule(Vec<Inputs>, Vec<Op>);
+
+impl Into<Rule> for Inputs {
+    fn into(self) -> Rule {
+        Rule(vec![self], vec![])
+    }
+}
 
 impl BitAnd for Inputs {
     type Output = Rule;
@@ -130,8 +140,8 @@ impl Mamdani {
     pub fn infer(&self, inputs: &[(InputType, f32)]) -> f32 {
         let finputs = self.fuzzify(inputs);
         let mut outputs = HashMap::new();
-        for (out, rule) in self.rules {
-            let (ins, ops) = (rule.0, rule.1);
+        for (&out, rule) in self.rules.iter() {
+            let (ins, ops) = (&rule.0, &rule.1);
             let mut result = finputs[&ins[0]];
             let mut j = 1;
             for op in ops {

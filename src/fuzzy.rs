@@ -4,7 +4,7 @@ where
     V: Eq + Hash + Copy,
 {
     members: usize,
-    pub functions: HashMap<V, fn(f32) -> f32>,
+    pub functions: HashMap<V, Box<dyn Fn(f32) -> f32>>,
     range: Range<f32>,
 }
 
@@ -12,7 +12,7 @@ impl<V> Fuzzy<V>
 where
     V: Eq + Hash + Copy,
 {
-    pub fn new(functions: HashMap<V, fn(f32) -> f32>) -> Fuzzy<V> {
+    pub fn new(functions: HashMap<V, Box<dyn Fn(f32) -> f32>>) -> Fuzzy<V> {
         Fuzzy {
             members: functions.len(),
             functions,
