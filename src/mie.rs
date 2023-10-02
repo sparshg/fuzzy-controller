@@ -139,6 +139,7 @@ impl Mamdani {
 
     pub fn infer(&self, inputs: &[(InputType, f32)]) -> f32 {
         let finputs = self.fuzzify(inputs);
+        // println!("{:?}", finputs);
         let mut outputs = HashMap::new();
         for (&out, rule) in self.rules.iter() {
             let (ins, ops) = (&rule.0, &rule.1);
@@ -157,6 +158,7 @@ impl Mamdani {
             }
             outputs.insert(out, result);
         }
+        // println!("{:?}", outputs);
         self.output.defuzzify(outputs, 100)
     }
 }

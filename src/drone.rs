@@ -5,7 +5,12 @@ use std::f32::consts::PI;
 use macroquad::prelude::*;
 use macroquad_particles::Emitter;
 
-use crate::{pid::PID, state::State};
+use crate::{
+    mie::{InputType, Mamdani},
+    pid::PID,
+    state::State,
+    ui::Graph,
+};
 
 pub struct Drone {
     pub enable: bool,
@@ -23,6 +28,7 @@ pub struct Drone {
     pid1: PID,
     pid2: PID,
     pid3: PID,
+    cont: Mamdani,
     point: Vec2,
 }
 
@@ -35,14 +41,14 @@ pub struct Drone {
 // }
 
 impl Drone {
-    pub fn new(e1: Emitter, e2: Emitter) -> Self {
+    pub fn new(e1: Emitter, e2: Emitter, cont: Mamdani) -> Self {
         let (m, M) = (4., 2.);
         Drone {
             m,
             M,
             t_m: 2. * m + M,
             l: 1.5,
-            g: 9.80665,
+            g: -9.80665,
             Tl: 0.,
             Tr: 0.,
             state: State::default(),
@@ -54,7 +60,7 @@ impl Drone {
             pid2: PID::new(0.1, 0., 0.15),
             pid3: PID::new(5., 0., 2.),
             point: vec2(0., 0.),
-            // ..Default::default()
+            cont,
         }
     }
 
@@ -75,26 +81,26 @@ impl Drone {
                 //             - self.state.w * self.pid.2))
                 //         .clamp(-self.Fclamp, self.Fclamp);
             }
-            // (self.Tl, self.Tr) = (0., 0.);
-            // if is_key_down(KeyCode::Left) {
-            //     self.int = 0.
-            //     self.Tl = self.t_m * 12.;
-            // }
-            // if is_key_down(KeyCode::Right) {
-            //     self.Tr = self.t_m * 12.;
-            //     self.F = self.Finp;
-            //     self.int = 0.
-            // }
+            (self.Tl, self.Tr) = (0., 0.);
+            if is_key_down(KeyCode::Left) {
+                //     self.int = 0.
+                self.Tl = self.t_m * 12.;
+            }
+            if is_key_down(KeyCode::Right) {
+                self.Tr = self.t_m * 12.;
+                //     self.F = self.Finp;
+                //     self.int = 0.
+            }
             if is_mouse_button_down(MouseButton::Left) {
                 self.point = vec2(
                     mouse_position_local().x * screen_width() * 0.01,
-                    mouse_position_local().y * screen_height() * 0.01,
+                    -mouse_position_local().y * screen_height() * 0.01,
                     // 5., 4.,
                 );
             }
             let amp = self
                 .pid1
-                .output(self.state.x.y - self.point.y, dt)
+                .output(self.point.y - self.state.x.y, dt)
                 .clamp(0., 20.);
             let o1 = self
                 .pid2
@@ -103,8 +109,17 @@ impl Drone {
             // self.state.th = o1;
             let diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
             // let diff = 0. as f32;
-            self.Tl = self.t_m * (amp - diff).max(0.);
-            self.Tr = self.t_m * (amp + diff).max(0.);
+            // self.Tl = self.t_m * (amp - diff).max(0.);
+            // self.Tr = self.t_m * (amp + diff).max(0.);
+            let t = (self
+                .cont
+                .infer(&[(InputType::Y, (self.state.x.y - self.point.y) / 20. + 0.5)])
+                - 0.25)
+                .max(0.)
+                * 14.;
+            // println!("y: {} \t t: {}", self.state.x.y, t);
+            self.Tl = self.t_m * t;
+            self.Tr = self.t_m * t;
             self.smoke1.config.amount = (self.Tl * 0.5) as u32;
             self.smoke2.config.amount = (self.Tr * 0.5) as u32;
             let k1 = self.process_state(self.state);
@@ -129,7 +144,7 @@ impl Drone {
             v,
             vec2(
                 -(self.Tl + self.Tr) * th.sin() / self.t_m,
-                -(self.Tl + self.Tr) * th.cos() / self.t_m + self.g,
+                (self.Tl + self.Tr) * th.cos() / self.t_m + self.g,
             ),
             w,
             (self.Tr - self.Tl) / (self.l * (2. * self.m + self.M / 12.)),
@@ -153,10 +168,10 @@ impl Drone {
         // draw a 2d drone with arm length of l
         let (x, y) = self.state.x.into();
         let th = self.state.th;
-        let (dx, dy) = (self.l * th.cos(), -self.l * th.sin());
+        let (dx, dy) = (self.l * th.cos(), self.l * th.sin());
 
-        self.smoke1.config.initial_direction = vec2(-dy, dx);
-        self.smoke2.config.initial_direction = vec2(-dy, dx);
+        self.smoke1.config.initial_direction = vec2(dy, -dx);
+        self.smoke2.config.initial_direction = vec2(dy, -dx);
         // self.smoke1.config.emitting = is_key_down(KeyCode::Left);
         // self.smoke2.config.emitting = is_key_down(KeyCode::Right);
         self.smoke1

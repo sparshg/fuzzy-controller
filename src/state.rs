@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use macroquad::prelude::Vec2;
 
 #[derive(Clone, Copy, PartialEq)]

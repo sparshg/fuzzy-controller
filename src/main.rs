@@ -5,10 +5,12 @@ mod fuzzy;
 mod mie;
 mod pid;
 mod state;
-use std::{collections::HashMap, f32::consts::PI};
+mod ui;
+use std::{collections::HashMap, f32::consts::PI, rc::Rc};
 
 use bezier::Bezier;
-use funcs::tri;
+use egui_macroquad::egui::epaint::text::FontsImpl;
+use funcs::{gauss, tri};
 use fuzzy::Fuzzy;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
 
@@ -17,6 +19,7 @@ use macroquad::prelude::*;
 use mie::{InputType, Inputs, Mamdani, Output, Y};
 use particles::{ColorCurve, Curve};
 use pid::PID;
+use ui::{draw_ui, Graph};
 
 fn smoke() -> particles::EmitterConfig {
     particles::EmitterConfig {
@@ -71,22 +74,21 @@ async fn main() {
         texture: Some(texture.clone()),
         ..smoke()
     });
-    let mut drone = Drone::new(e1, e2);
     set_camera(&Camera2D {
         zoom: vec2(100. / screen_width(), 100. / screen_height()),
         ..Default::default()
     });
     let m = Mamdani {
         rules: HashMap::from([
-            (Output::None, !Inputs::Y(Y::Pos)),
-            (Output::Small, !Inputs::Y(Y::Neg)),
-            (Output::Large, Inputs::Y(Y::Pos).into()),
+            (Output::None, Inputs::Y(Y::Pos).into()),
+            (Output::Small, Inputs::Y(Y::Neg).into()),
+            (Output::Large, Inputs::Y(Y::Neg).into()),
         ]),
         inputs: HashMap::from([(
             InputType::Y,
             Fuzzy::new(HashMap::from([
                 (Inputs::Y(Y::Neg), tri(0.0, 0.25, 0.5)),
-                (Inputs::Y(Y::Zero), tri(0.25, 0.5, 0.75)),
+                (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
                 (Inputs::Y(Y::Pos), tri(0.5, 0.75, 1.0)),
             ])),
         )]),
@@ -96,7 +98,26 @@ async fn main() {
             (Output::Large, tri(0.5, 0.75, 1.0)),
         ])),
     };
-
+    // m.infer(&[(InputType::Y, 0.6)]);
+    let mut gr: Graph = Graph::new(
+        &["title"],
+        (20., 20.),
+        (200., 200.),
+        m.inputs[&InputType::Y]
+            .functions
+            .values()
+            .map(|f| f.clone())
+            .collect(),
+        None,
+    );
+    let mut gr2: Graph = Graph::new(
+        &["titlee"],
+        (20., 240.),
+        (200., 200.),
+        m.output.functions.values().map(|f| f.clone()).collect(),
+        None,
+    );
+    let mut drone = Drone::new(e1, e2, m);
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
             break;
@@ -105,6 +126,7 @@ async fn main() {
         clear_background(BLACK);
         drone.update(get_frame_time());
         drone.display(WHITE, 0.05);
+        draw_ui(1280., &mut gr, &mut gr2);
         next_frame().await;
     }
 }
