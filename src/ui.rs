@@ -1,14 +1,12 @@
-use std::{collections::VecDeque, f32::INFINITY, rc::Rc};
+use std::rc::Rc;
 
 use egui::{
     epaint::Shadow,
-    plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotBounds, PlotPoints},
-    Align, Align2, Color32, DragValue, Frame, Layout, Pos2, Slider, Vec2,
+    plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotPoints},
+    Color32, Frame, Pos2, Vec2,
 };
 use egui_macroquad::egui;
 use macroquad::prelude::*;
-
-use crate::funcs;
 
 pub struct Graph {
     title: &'static [&'static str],
@@ -96,9 +94,7 @@ impl Graph {
                                 Line::new(
                                     (0..=100)
                                         .map(|i| {
-                                            use std::f64::consts::TAU;
-                                            let x =
-                                                egui::remap(i as f64, 0.0..=100 as f64, -0.0..=1.);
+                                            let x = egui::remap(i as f64, 0.0..=100f64, -0.0..=1.);
                                             [x, f(x as f32) as f64]
                                         })
                                         .collect::<PlotPoints>(),
@@ -113,7 +109,7 @@ impl Graph {
     }
 }
 
-pub fn draw_ui(w: f32, forceplt: &mut Graph, forceplt1: &mut Graph) {
+pub fn draw_ui(_w: f32, forceplt: &Graph, forceplt1: &Graph) {
     egui_macroquad::ui(|ctx: &egui::Context| {
         // ctx.set_debug_on_hover(true);
         // ctx.set_pixels_per_point(screen_width() / w);

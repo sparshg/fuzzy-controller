@@ -6,10 +6,8 @@ mod mie;
 mod pid;
 mod state;
 mod ui;
-use std::{collections::HashMap, f32::consts::PI, rc::Rc};
+use std::{collections::HashMap, f32::consts::PI};
 
-use bezier::Bezier;
-use egui_macroquad::egui::epaint::text::FontsImpl;
 use funcs::{gauss, tri};
 use fuzzy::Fuzzy;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
@@ -18,7 +16,7 @@ use drone::Drone;
 use macroquad::prelude::*;
 use mie::{InputType, Inputs, Mamdani, Output, Y};
 use particles::{ColorCurve, Curve};
-use pid::PID;
+
 use ui::{draw_ui, Graph};
 
 fn smoke() -> particles::EmitterConfig {
@@ -67,11 +65,11 @@ async fn main() {
     let texture = load_texture("smoke.png").await.unwrap();
 
     let e1 = Emitter::new(EmitterConfig {
-        texture: Some(texture.clone()),
+        texture: Some(texture),
         ..smoke()
     });
     let e2 = Emitter::new(EmitterConfig {
-        texture: Some(texture.clone()),
+        texture: Some(texture),
         ..smoke()
     });
     set_camera(&Camera2D {
@@ -106,7 +104,7 @@ async fn main() {
         m.inputs[&InputType::Y]
             .functions
             .values()
-            .map(|f| f.clone())
+            .cloned()
             .collect(),
         None,
     );
@@ -114,7 +112,7 @@ async fn main() {
         &["titlee"],
         (20., 240.),
         (200., 200.),
-        m.output.functions.values().map(|f| f.clone()).collect(),
+        m.output.functions.values().cloned().collect(),
         None,
     );
     let mut drone = Drone::new(e1, e2, m);
@@ -126,7 +124,7 @@ async fn main() {
         clear_background(BLACK);
         drone.update(get_frame_time());
         drone.display(WHITE, 0.05);
-        draw_ui(1280., &mut gr, &mut gr2);
+        draw_ui(1280., &gr, &gr2);
         next_frame().await;
     }
 }

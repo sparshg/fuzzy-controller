@@ -1,6 +1,6 @@
 use macroquad::prelude::Vec2;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 
 pub struct State {
     pub x: Vec2,
@@ -31,6 +31,7 @@ impl State {
     pub fn after(&self, (v, vdot, w, wdot): (Vec2, Vec2, f32, f32), dt: f32) -> State {
         let mut new_state = self.clone();
         new_state.update((v, vdot, wdot, w), dt);
+        println!("{:?}", new_state);
         new_state
     }
 

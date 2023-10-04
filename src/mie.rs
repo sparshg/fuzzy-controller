@@ -44,9 +44,9 @@ pub enum Y {
 #[derive(Debug)]
 pub struct Rule(Vec<Inputs>, Vec<Op>);
 
-impl Into<Rule> for Inputs {
-    fn into(self) -> Rule {
-        Rule(vec![self], vec![])
+impl From<Inputs> for Rule {
+    fn from(val: Inputs) -> Self {
+        Rule(vec![val], vec![])
     }
 }
 

@@ -1,7 +1,5 @@
 #![allow(non_snake_case)]
 
-use std::f32::consts::PI;
-
 use macroquad::prelude::*;
 use macroquad_particles::Emitter;
 
@@ -9,7 +7,6 @@ use crate::{
     mie::{InputType, Mamdani},
     pid::PID,
     state::State,
-    ui::Graph,
 };
 
 pub struct Drone {
@@ -98,7 +95,7 @@ impl Drone {
                     // 5., 4.,
                 );
             }
-            let amp = self
+            let _amp = self
                 .pid1
                 .output(self.point.y - self.state.x.y, dt)
                 .clamp(0., 20.);
@@ -107,7 +104,7 @@ impl Drone {
                 .output(self.state.x.x - self.point.x, dt)
                 .clamp(-0.8, 0.8);
             // self.state.th = o1;
-            let diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
+            let _diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
             // let diff = 0. as f32;
             // self.Tl = self.t_m * (amp - diff).max(0.);
             // self.Tr = self.t_m * (amp + diff).max(0.);
@@ -122,10 +119,10 @@ impl Drone {
             self.Tr = self.t_m * t;
             self.smoke1.config.amount = (self.Tl * 0.5) as u32;
             self.smoke2.config.amount = (self.Tr * 0.5) as u32;
-            let k1 = self.process_state(self.state);
-            let k2 = self.process_state(self.state.after(k1, dt * 0.5));
-            let k3 = self.process_state(self.state.after(k2, dt * 0.5));
-            let k4 = self.process_state(self.state.after(k3, dt));
+            let k1 = self.process_state(&self.state);
+            let k2 = self.process_state(&self.state.after(k1, dt * 0.5));
+            let k3 = self.process_state(&self.state.after(k2, dt * 0.5));
+            let k4 = self.process_state(&self.state.after(k3, dt));
 
             let k_avg = (
                 (k1.0 + 2.0 * k2.0 + 2.0 * k3.0 + k4.0) / 6.0,
@@ -137,7 +134,7 @@ impl Drone {
         }
     }
 
-    pub fn process_state(&self, state: State) -> (Vec2, Vec2, f32, f32) {
+    pub fn process_state(&self, state: &State) -> (Vec2, Vec2, f32, f32) {
         let (_, v, th, w) = state.unpack();
         // returns (v, vdot, w, wdot)
         (
