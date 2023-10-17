@@ -6,18 +6,16 @@ mod mie;
 mod pid;
 mod state;
 mod ui;
-use std::{collections::HashMap, f32::consts::PI};
-
-use funcs::{gauss, tri};
+use egui_macroquad::egui;
+use funcs::{cliff, gauss, mount, smf, tri, zmf};
 use fuzzy::Fuzzy;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
+use std::{collections::HashMap, f32::consts::PI};
 
 use drone::Drone;
 use macroquad::prelude::*;
 use mie::{InputType, Inputs, Mamdani, Output, Y};
 use particles::{ColorCurve, Curve};
-
-use ui::{draw_ui, Graph};
 
 fn smoke() -> particles::EmitterConfig {
     particles::EmitterConfig {
@@ -76,7 +74,7 @@ async fn main() {
         zoom: vec2(100. / screen_width(), 100. / screen_height()),
         ..Default::default()
     });
-    let m = Mamdani {
+    let mut m = Mamdani {
         rules: HashMap::from([
             (Output::None, Inputs::Y(Y::Pos).into()),
             (Output::Small, Inputs::Y(Y::Neg).into()),
@@ -84,47 +82,47 @@ async fn main() {
         ]),
         inputs: HashMap::from([(
             InputType::Y,
-            Fuzzy::new(HashMap::from([
-                (Inputs::Y(Y::Neg), tri(0.0, 0.25, 0.5)),
-                (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
-                (Inputs::Y(Y::Pos), tri(0.5, 0.75, 1.0)),
-            ])),
+            Fuzzy::new(
+                HashMap::from([
+                    // (Inputs::Y(Y::Neg), zmf(0.25, 0.5)),
+                    // (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
+                    // (Inputs::Y(Y::Pos), smf(0.5, 0.75)),
+                    (Inputs::Y(Y::Neg), cliff(0.25, 0.5)),
+                    (Inputs::Y(Y::Zero), tri(0.25, 0.5, 0.75)),
+                    (Inputs::Y(Y::Pos), mount(0.5, 0.75)),
+                ]),
+                -5.0..5.,
+                (10., 10.),
+                (250., 200.),
+            ),
         )]),
-        output: Fuzzy::new(HashMap::from([
-            (Output::None, tri(0.0, 0.25, 0.5)),
-            (Output::Small, tri(0.25, 0.5, 0.75)),
-            (Output::Large, tri(0.5, 0.75, 1.0)),
-        ])),
+        output: Fuzzy::new(
+            HashMap::from([
+                (Output::None, tri(0.0, 0.25, 0.5)),
+                (Output::Small, tri(0.25, 0.5, 0.75)),
+                (Output::Large, tri(0.5, 0.75, 1.0)),
+            ]),
+            -30.0..30.,
+            (10., 210.),
+            (250., 200.),
+        ),
     };
-    // m.infer(&[(InputType::Y, 0.6)]);
-    let mut gr: Graph = Graph::new(
-        &["title"],
-        (20., 20.),
-        (200., 200.),
-        m.inputs[&InputType::Y]
-            .functions
-            .values()
-            .cloned()
-            .collect(),
-        None,
-    );
-    let mut gr2: Graph = Graph::new(
-        &["titlee"],
-        (20., 240.),
-        (200., 200.),
-        m.output.functions.values().cloned().collect(),
-        None,
-    );
-    let mut drone = Drone::new(e1, e2, m);
+    // dbg!(m.infer(&[(InputType::Y, -0.6)]));
+    let mut drone = Drone::new(e1, e2);
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
             break;
         }
 
         clear_background(BLACK);
-        drone.update(get_frame_time());
+        drone.update(&mut m, get_frame_time());
         drone.display(WHITE, 0.05);
-        draw_ui(1280., &gr, &gr2);
+        // draw_ui(1280., &gr, &gr2);
+        egui_macroquad::ui(|ctx: &egui::Context| {
+            m.inputs[&InputType::Y].draw(ctx, false);
+            m.output.draw(ctx, true);
+        });
+        egui_macroquad::draw();
         next_frame().await;
     }
 }

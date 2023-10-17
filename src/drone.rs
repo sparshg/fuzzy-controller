@@ -25,7 +25,6 @@ pub struct Drone {
     pid1: PID,
     pid2: PID,
     pid3: PID,
-    cont: Mamdani,
     point: Vec2,
 }
 
@@ -38,7 +37,7 @@ pub struct Drone {
 // }
 
 impl Drone {
-    pub fn new(e1: Emitter, e2: Emitter, cont: Mamdani) -> Self {
+    pub fn new(e1: Emitter, e2: Emitter) -> Self {
         let (m, M) = (4., 2.);
         Drone {
             m,
@@ -57,11 +56,10 @@ impl Drone {
             pid2: PID::new(0.1, 0., 0.15),
             pid3: PID::new(5., 0., 2.),
             point: vec2(0., 0.),
-            cont,
         }
     }
 
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, controller: &mut Mamdani, dt: f32) {
         let steps = if dt > 0.02 {
             ((self.steps * 60) as f32 * dt) as i32
         } else {
@@ -97,23 +95,19 @@ impl Drone {
             }
             let _amp = self
                 .pid1
-                .output(self.point.y - self.state.x.y, dt)
+                .output(self.point.y - self.state.p.y, dt)
                 .clamp(0., 20.);
             let o1 = self
                 .pid2
-                .output(self.state.x.x - self.point.x, dt)
+                .output(self.state.p.x - self.point.x, dt)
                 .clamp(-0.8, 0.8);
             // self.state.th = o1;
             let _diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
             // let diff = 0. as f32;
-            // self.Tl = self.t_m * (amp - diff).max(0.);
-            // self.Tr = self.t_m * (amp + diff).max(0.);
-            let t = (self
-                .cont
-                .infer(&[(InputType::Y, (self.state.x.y - self.point.y) / 20. + 0.5)])
-                - 0.25)
-                .max(0.)
-                * 14.;
+            // self.Tl = self.t_m * (_amp - _diff).max(0.);
+            // self.Tr = self.t_m * (_amp + _diff).max(0.);
+            let t = (controller.infer(&[(InputType::Y, self.state.p.y - self.point.y)])).max(0.);
+            // dbg!(t);
             // println!("y: {} \t t: {}", self.state.x.y, t);
             self.Tl = self.t_m * t;
             self.Tr = self.t_m * t;
@@ -163,7 +157,7 @@ impl Drone {
 
     pub fn display(&mut self, color: Color, thickness: f32) {
         // draw a 2d drone with arm length of l
-        let (x, y) = self.state.x.into();
+        let (x, y) = self.state.p.into();
         let th = self.state.th;
         let (dx, dy) = (self.l * th.cos(), self.l * th.sin());
 
@@ -172,9 +166,9 @@ impl Drone {
         // self.smoke1.config.emitting = is_key_down(KeyCode::Left);
         // self.smoke2.config.emitting = is_key_down(KeyCode::Right);
         self.smoke1
-            .draw(vec2(self.state.x.x - dx, self.state.x.y - dy));
+            .draw(vec2(self.state.p.x - dx, self.state.p.y - dy));
         self.smoke2
-            .draw(vec2(self.state.x.x + dx, self.state.x.y + dy));
+            .draw(vec2(self.state.p.x + dx, self.state.p.y + dy));
         // draw_circle(x - dx - 0.1, y - dy + 0.1, 0.1, color);
         // draw_circle(x + dx + 0.1, y + dy + 0.1, 0.1, color);
 

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Display,
     ops::{BitAnd, BitOr, Not},
 };
 
@@ -12,15 +13,13 @@ enum Op {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-
 pub enum InputType {
-    Y, // F(Food),
+    Y,
 }
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Inputs {
     Y(Y),
-    // F(Food),
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Output {
@@ -36,17 +35,48 @@ pub enum Y {
     Pos,
 }
 
-// #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-// pub enum Food {
-//     Rancid,
-//     Delicious,
-// }
+impl Display for Y {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Y::Neg => write!(f, "Y-"),
+            Y::Zero => write!(f, "Y0"),
+            Y::Pos => write!(f, "Y+"),
+        }
+    }
+}
+
+impl Display for Inputs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Inputs::Y(y) => write!(f, "{}", y),
+        }
+    }
+}
+
+impl Display for Output {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Output::None => write!(f, "None"),
+            Output::Small => write!(f, "Small"),
+            Output::Large => write!(f, "Large"),
+        }
+    }
+}
+
+impl Display for InputType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InputType::Y => write!(f, "Y"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Rule(Vec<Inputs>, Vec<Op>);
 
-impl From<Inputs> for Rule {
-    fn from(val: Inputs) -> Self {
-        Rule(vec![val], vec![])
+impl Into<Rule> for Inputs {
+    fn into(self) -> Rule {
+        Rule(vec![self], vec![])
     }
 }
 
@@ -130,14 +160,14 @@ pub struct Mamdani {
 }
 
 impl Mamdani {
-    pub fn fuzzify(&self, crisp: &[(InputType, f32)]) -> HashMap<Inputs, f32> {
+    pub fn fuzzify(&mut self, crisp: &[(InputType, f32)]) -> HashMap<Inputs, f32> {
         crisp
             .iter()
-            .flat_map(|(i, x)| self.inputs[i].fuzzify(*x))
+            .flat_map(|(i, x)| self.inputs.get_mut(i).unwrap().fuzzify(*x))
             .collect()
     }
 
-    pub fn infer(&self, inputs: &[(InputType, f32)]) -> f32 {
+    pub fn infer(&mut self, inputs: &[(InputType, f32)]) -> f32 {
         let finputs = self.fuzzify(inputs);
         // println!("{:?}", finputs);
         let mut outputs = HashMap::new();
@@ -159,6 +189,6 @@ impl Mamdani {
             outputs.insert(out, result);
         }
         // println!("{:?}", outputs);
-        self.output.defuzzify(outputs, 100)
+        self.output.defuzzify(outputs)
     }
 }

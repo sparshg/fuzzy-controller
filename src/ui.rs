@@ -1,27 +1,36 @@
-use std::rc::Rc;
+use std::{collections::HashMap, hash::Hash, rc::Rc};
 
 use egui::{
     epaint::Shadow,
     plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotPoints},
     Color32, Frame, Pos2, Vec2,
 };
-use egui_macroquad::egui;
+use egui_macroquad::egui::{
+    self,
+    plot::{Points, VLine},
+};
 use macroquad::prelude::*;
 
-pub struct Graph {
-    title: &'static [&'static str],
+pub struct Graph<V>
+where
+    V: Eq + Hash + Copy,
+{
+    title: Vec<String>,
     pos: Pos2,
     size: Vec2,
-    functions: Vec<Rc<dyn Fn(f32) -> f32>>,
+    functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
     colors: Vec<Color32>,
 }
 
-impl Graph {
+impl<V> Graph<V>
+where
+    V: Eq + Hash + Copy,
+{
     pub fn new(
-        title: &'static [&'static str],
+        title: Vec<String>,
         pos: (f32, f32),
         size: (f32, f32),
-        functions: Vec<Rc<dyn Fn(f32) -> f32>>,
+        functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
         colors: Option<Vec<Color32>>,
     ) -> Self {
         Graph {
@@ -34,9 +43,9 @@ impl Graph {
         }
     }
 
-    pub fn y(&mut self, y: f32) {
-        self.pos.y = y;
-    }
+    // pub fn y(&mut self, y: f32) {
+    //     self.pos.y = y;
+    // }
 
     // pub fn update(&mut self, track: Vec<f64>) {
     //     assert!(track.len() == self.history.len());
@@ -48,8 +57,8 @@ impl Graph {
     //     }
     // }
 
-    pub fn draw(&self, ctx: &egui::Context) {
-        egui::Window::new(self.title[0])
+    pub fn draw(&self, ctx: &egui::Context, inp: Option<f32>, out: Option<&Vec<(f32, f32)>>) {
+        egui::Window::new(&self.title[0])
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
                 outer_margin: egui::Margin::same(0.),
@@ -65,7 +74,7 @@ impl Graph {
             .collapsible(false)
             .title_bar(false)
             .show(ctx, |ui| {
-                Plot::new("example")
+                Plot::new("plot")
                     .width(self.size.x)
                     .height(self.size.y)
                     .show_axes([false, false])
@@ -88,8 +97,11 @@ impl Graph {
                         //     [0., -clamp * 1.1],
                         //     [self.hsize as f64, clamp * 1.1],
                         // ));
-                        plot_ui.hline(HLine::new(0.).color(Color32::WHITE).width(1.));
-                        for (i, f) in self.functions.iter().enumerate() {
+                        if let Some(x) = inp {
+                            plot_ui
+                                .vline(VLine::new(x.clamp(0., 1.)).color(Color32::GREEN).width(1.));
+                        }
+                        for (i, (_, f)) in self.functions.iter().enumerate() {
                             plot_ui.line(
                                 Line::new(
                                     (0..=100)
@@ -100,7 +112,30 @@ impl Graph {
                                         .collect::<PlotPoints>(),
                                 )
                                 .width(2.)
-                                .color(self.colors[i]), // .name(self.title[i + 1]),
+                                .color(self.colors[i]), // .name(&self.title[i]),
+                            );
+                        }
+                        if let Some(out) = out {
+                            plot_ui.line(
+                                Line::new(
+                                    out.iter()
+                                        .skip(1)
+                                        .map(|(x, y)| [*x as f64, *y as f64])
+                                        .collect::<PlotPoints>(),
+                                )
+                                .fill(0.)
+                                .width(4.)
+                                .color(Color32::GREEN), // .name(&self.title[i]),
+                            );
+                            plot_ui.hline(HLine::new(out[0].1 as f64).color(Color32::GREEN));
+                            plot_ui.vline(VLine::new(out[0].0 as f64).color(Color32::GREEN));
+                            plot_ui.points(
+                                Points::new([out[0].0 as f64, out[0].1 as f64])
+                                    // .name(format!("Hello"))
+                                    .filled(true)
+                                    .radius(6.)
+                                    .color(Color32::GREEN)
+                                    .shape(egui::plot::MarkerShape::Cross),
                             );
                         }
                     })
@@ -109,14 +144,17 @@ impl Graph {
     }
 }
 
-pub fn draw_ui(_w: f32, forceplt: &Graph, forceplt1: &Graph) {
-    egui_macroquad::ui(|ctx: &egui::Context| {
-        // ctx.set_debug_on_hover(true);
-        // ctx.set_pixels_per_point(screen_width() / w);
-        // forceplt.y(2.);
-        // forceplt1.y(2.);
-        forceplt.draw(ctx);
-        forceplt1.draw(ctx);
-    });
-    egui_macroquad::draw();
-}
+// pub fn draw_ui<V>(_w: f32, forceplt: &Graph<V>, forceplt1: &Graph<V>)
+// where
+//     V: Eq + Hash + Copy,
+// {
+//     egui_macroquad::ui(|ctx: &egui::Context| {
+//         // ctx.set_debug_on_hover(true);
+//         // ctx.set_pixels_per_point(screen_width() / w);
+//         // forceplt.y(2.);
+//         // forceplt1.y(2.);
+//         // forceplt.draw(ctx);
+//         // forceplt1.draw(ctx);
+//     });
+//     egui_macroquad::draw();
+// }
