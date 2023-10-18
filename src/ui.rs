@@ -3,21 +3,18 @@ use std::{collections::HashMap, hash::Hash, rc::Rc};
 use egui::{
     epaint::Shadow,
     plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotPoints},
-    Color32, Frame, Pos2, Vec2,
+    Color32, Frame,
 };
 use egui_macroquad::egui::{
     self,
     plot::{Points, VLine},
 };
 use macroquad::prelude::*;
-
 pub struct Graph<V>
 where
     V: Eq + Hash + Copy,
 {
     title: Vec<String>,
-    pos: Pos2,
-    size: Vec2,
     functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
     colors: Vec<Color32>,
 }
@@ -28,15 +25,11 @@ where
 {
     pub fn new(
         title: Vec<String>,
-        pos: (f32, f32),
-        size: (f32, f32),
         functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
         colors: Option<Vec<Color32>>,
     ) -> Self {
         Graph {
             title,
-            pos: pos.into(),
-            size: size.into(),
             colors: colors
                 .unwrap_or_else(|| (0..functions.len()).map(|_| Color32::WHITE).collect()),
             functions,
@@ -57,7 +50,14 @@ where
     //     }
     // }
 
-    pub fn draw(&self, ctx: &egui::Context, inp: Option<f32>, out: Option<&Vec<(f32, f32)>>) {
+    pub fn draw(
+        &self,
+        ctx: &egui::Context,
+        pos: (f32, f32),
+        size: (f32, f32),
+        inp: Option<f32>,
+        out: Option<&Vec<(f32, f32)>>,
+    ) {
         egui::Window::new(&self.title[0])
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
@@ -67,16 +67,16 @@ where
                 shadow: Shadow::NONE,
                 stroke: egui::Stroke::new(2., Color32::WHITE),
             })
-            .current_pos(self.pos)
-            .default_size(self.size)
+            .current_pos(pos)
+            .default_size(size)
             .resizable(false)
             .movable(false)
             .collapsible(false)
             .title_bar(false)
             .show(ctx, |ui| {
                 Plot::new("plot")
-                    .width(self.size.x)
-                    .height(self.size.y)
+                    .width(size.0)
+                    .height(size.1)
                     .show_axes([false, false])
                     .show_background(false)
                     .allow_drag(false)

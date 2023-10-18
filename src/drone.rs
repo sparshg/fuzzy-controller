@@ -94,7 +94,12 @@ impl Drone {
             // let diff = 0. as f32;
             // self.Tl = self.t_m * (_amp - _diff).max(0.);
             // self.Tr = self.t_m * (_amp + _diff).max(0.);
-            let t = (controller.infer(&[(InputType::Y, self.state.p.y - self.point.y)])).max(0.);
+            // controller.infer(&[(InputType::Y, 1.), (InputType::Yv, 0.)]);
+            let t = (controller.infer(&[
+                (InputType::Y, self.state.p.y - self.point.y),
+                (InputType::Yv, self.state.v.y),
+            ]))
+            .max(0.);
             // dbg!(t);
             // println!("y: {} \t t: {}", self.state.x.y, t);
             self.Tl = self.t_m * t;

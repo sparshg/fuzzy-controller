@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use crate::{
     fuzzy::Fuzzy,
-    rules::{InputType, Inputs, Op, Output, Rule},
+    rules::{InputType, Inputs, Op, Output, Rule, RuleNode},
 };
 
 pub struct Mamdani {
-    pub rules: HashMap<Output, Rule>,
+    pub rules: Vec<(Rule, Output)>,
     pub inputs: HashMap<InputType, Fuzzy<Inputs>>,
     pub output: Fuzzy<Output>,
 }
@@ -19,28 +19,35 @@ impl Mamdani {
             .collect()
     }
 
+    fn resolve(&self, rule: &Rule, finputs: &HashMap<Inputs, f32>) -> f32 {
+        match &rule.val {
+            RuleNode::Input(i) => finputs[&i],
+            RuleNode::Op(o) => {
+                let left = self.resolve(&rule.left.as_ref().expect("Op at end of tree"), finputs);
+                if let Op::Not(f) = o {
+                    if rule.right.is_some() {
+                        panic!("Not op must have only one (left) child");
+                    }
+                    return f(left);
+                }
+                let right = self.resolve(&rule.left.as_ref().expect("Op at end of tree"), finputs);
+                match o {
+                    Op::And(f) => f(left, right),
+                    Op::Or(f) => f(left, right),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
     pub fn infer(&mut self, inputs: &[(InputType, f32)]) -> f32 {
         let finputs = self.fuzzify(inputs);
         // println!("{:?}", finputs);
         let mut outputs = HashMap::new();
-        for (&out, rule) in self.rules.iter() {
-            let (ins, ops) = (&rule.0, &rule.1);
-            let mut result = finputs[&ins[0]];
-            let mut j = 1;
-            for op in ops {
-                result = match op {
-                    Op::And(f) => f(result, finputs[&ins[j]]),
-                    Op::Or(f) => f(result, finputs[&ins[j]]),
-                    Op::Not(f) => {
-                        j -= 1;
-                        f(result)
-                    }
-                };
-                j += 1;
-            }
-            outputs.insert(out, result);
+        for (rule, out) in self.rules.iter() {
+            outputs.insert(*out, self.resolve(&rule, &finputs));
         }
-        // println!("{:?}", outputs);
+        println!("{:?}", outputs);
         self.output.defuzzify(outputs)
     }
 }

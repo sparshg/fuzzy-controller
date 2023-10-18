@@ -2,7 +2,8 @@ use std::{collections::HashMap, fmt::Display, hash::Hash, ops::Range, rc::Rc};
 
 use egui_macroquad::egui::Context;
 
-use crate::{rules::InputType, ui::Graph};
+use crate::ui::Graph;
+
 pub struct Fuzzy<V>
 where
     V: Eq + Hash + Copy + Display,
@@ -20,20 +21,13 @@ impl<V> Fuzzy<V>
 where
     V: Eq + Hash + Copy + Display,
 {
-    pub fn new(
-        functions: HashMap<V, Box<dyn Fn(f32) -> f32>>,
-        range: Range<f32>,
-        pos: (f32, f32),
-        size: (f32, f32),
-    ) -> Fuzzy<V> {
+    pub fn new(functions: HashMap<V, Box<dyn Fn(f32) -> f32>>, range: Range<f32>) -> Fuzzy<V> {
         let f = Rc::new(functions);
         Fuzzy {
             members: f.len(),
             range,
             graph: Graph::new(
                 f.keys().map(|x| x.to_string()).collect(),
-                pos,
-                size,
                 Rc::clone(&f),
                 None,
             ),
@@ -43,13 +37,12 @@ where
             last_output: vec![(0., 0.); 101],
         }
     }
-    pub fn fuzzify(&mut self, x: f32) -> HashMap<V, f32> {
+    pub fn fuzzify(&mut self, x: f32) -> Vec<(V, f32)> {
         self.last_input = (x - self.range.start) / (self.range.end - self.range.start);
-        let mut result = HashMap::with_capacity(self.members);
+        let mut result = Vec::with_capacity(self.members);
         for (&l, f) in self.functions.iter() {
-            result.insert(l, f(self.last_input));
+            result.push((l, f(self.last_input)));
         }
-        println!("{}", x);
         result
     }
 
@@ -79,9 +72,11 @@ where
         mx * (self.range.end - self.range.start) + self.range.start
     }
 
-    pub fn draw(&self, ctx: &Context, is_output: bool) {
+    pub fn draw(&self, ctx: &Context, pos: (f32, f32), size: (f32, f32), is_output: bool) {
         self.graph.draw(
             ctx,
+            pos,
+            size,
             if is_output {
                 None
             } else {

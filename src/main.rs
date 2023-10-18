@@ -17,7 +17,7 @@ use mamdani::Mamdani;
 use std::{collections::HashMap, f32::consts::PI};
 
 use particles::{ColorCurve, Curve};
-use rules::{InputType, Inputs, Output, Y};
+use rules::{InputType, Inputs, Output, Yv, Y};
 
 fn smoke() -> particles::EmitterConfig {
     particles::EmitterConfig {
@@ -76,28 +76,47 @@ async fn main() {
         zoom: vec2(100. / screen_width(), 100. / screen_height()),
         ..Default::default()
     });
+    let (yn, yz, yp) = (Inputs::Y(Y::N), Inputs::Y(Y::Z), Inputs::Y(Y::P));
+    let (vn, vz, vp) = (Inputs::Yv(Yv::N), Inputs::Yv(Yv::Z), Inputs::Yv(Yv::P));
     let mut m = Mamdani {
-        rules: HashMap::from([
-            (Output::None, Inputs::Y(Y::Pos).into()),
-            (Output::Small, Inputs::Y(Y::Neg).into()),
-            (Output::Large, Inputs::Y(Y::Neg).into()),
-        ]),
-        inputs: HashMap::from([(
-            InputType::Y,
-            Fuzzy::new(
-                HashMap::from([
-                    // (Inputs::Y(Y::Neg), zmf(0.25, 0.5)),
-                    // (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
-                    // (Inputs::Y(Y::Pos), smf(0.5, 0.75)),
-                    (Inputs::Y(Y::Neg), cliff(0.25, 0.5)),
-                    (Inputs::Y(Y::Zero), tri(0.25, 0.5, 0.75)),
-                    (Inputs::Y(Y::Pos), mount(0.5, 0.75)),
-                ]),
-                -5.0..5.,
-                (10., 10.),
-                (250., 200.),
+        rules: vec![
+            (yz & vp | yp & vp, Output::None),
+            (
+                yz & vn | yp & vn | yz & vz | yp & vz | yn & vp,
+                Output::Small,
             ),
-        )]),
+            (yn & vn | yn & vz, Output::Large),
+        ],
+        inputs: HashMap::from([
+            (
+                InputType::Y,
+                Fuzzy::new(
+                    HashMap::from([
+                        // (Inputs::Y(Y::Neg), zmf(0.25, 0.5)),
+                        // (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
+                        // (Inputs::Y(Y::Pos), smf(0.5, 0.75)),
+                        (Inputs::Y(Y::N), cliff(0.25, 0.5)),
+                        (Inputs::Y(Y::Z), tri(0.25, 0.5, 0.75)),
+                        (Inputs::Y(Y::P), mount(0.5, 0.75)),
+                    ]),
+                    -5.0..5.,
+                ),
+            ),
+            (
+                InputType::Yv,
+                Fuzzy::new(
+                    HashMap::from([
+                        // (Inputs::Y(Y::Neg), zmf(0.25, 0.5)),
+                        // (Inputs::Y(Y::Zero), gauss(0.4, 0.6)),
+                        // (Inputs::Y(Y::Pos), smf(0.5, 0.75)),
+                        (Inputs::Yv(Yv::N), cliff(0.25, 0.5)),
+                        (Inputs::Yv(Yv::Z), tri(0.25, 0.5, 0.75)),
+                        (Inputs::Yv(Yv::P), mount(0.5, 0.75)),
+                    ]),
+                    -10.0..10.,
+                ),
+            ),
+        ]),
         output: Fuzzy::new(
             HashMap::from([
                 (Output::None, tri(0.0, 0.25, 0.5)),
@@ -105,11 +124,9 @@ async fn main() {
                 (Output::Large, tri(0.5, 0.75, 1.0)),
             ]),
             -30.0..30.,
-            (10., 210.),
-            (250., 200.),
         ),
     };
-    // dbg!(m.infer(&[(InputType::Y, -0.6)]));
+    dbg!(yz & vp | yp & vp);
     let mut drone = Drone::new(e1, e2);
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
@@ -121,8 +138,9 @@ async fn main() {
         drone.display(WHITE, 0.05);
         // draw_ui(1280., &gr, &gr2);
         egui_macroquad::ui(|ctx: &egui::Context| {
-            m.inputs[&InputType::Y].draw(ctx, false);
-            m.output.draw(ctx, true);
+            m.inputs[&InputType::Y].draw(ctx, (10., 10.), (250., 200.), false);
+            m.inputs[&InputType::Yv].draw(ctx, (10., 220.), (250., 200.), false);
+            m.output.draw(ctx, (10., 430.), (250., 200.), true);
         });
         egui_macroquad::draw();
         next_frame().await;
