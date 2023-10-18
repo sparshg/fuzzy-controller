@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display, hash::Hash, ops::Range, rc::Rc};
 
 use egui_macroquad::egui::Context;
 
-use crate::{mie::InputType, ui::Graph};
+use crate::{rules::InputType, ui::Graph};
 pub struct Fuzzy<V>
 where
     V: Eq + Hash + Copy + Display,

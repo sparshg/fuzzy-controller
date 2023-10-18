@@ -1,13 +1,9 @@
 #![allow(non_snake_case)]
 
+use crate::mamdani::Mamdani;
+use crate::{pid::PID, rules::InputType, state::State};
 use macroquad::prelude::*;
 use macroquad_particles::Emitter;
-
-use crate::{
-    mie::{InputType, Mamdani},
-    pid::PID,
-    state::State,
-};
 
 pub struct Drone {
     pub enable: bool,
@@ -27,14 +23,6 @@ pub struct Drone {
     pid3: PID,
     point: Vec2,
 }
-
-// impl Default for Drone {
-//     fn default() -> Self {
-//         Drone {
-//             // ..Default::default()
-//         }
-//     }
-// }
 
 impl Drone {
     pub fn new(e1: Emitter, e2: Emitter) -> Self {

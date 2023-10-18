@@ -2,20 +2,22 @@ mod bezier;
 mod drone;
 mod funcs;
 mod fuzzy;
-mod mie;
+mod mamdani;
 mod pid;
+mod rules;
 mod state;
 mod ui;
+use drone::Drone;
 use egui_macroquad::egui;
 use funcs::{cliff, gauss, mount, smf, tri, zmf};
 use fuzzy::Fuzzy;
+use macroquad::prelude::*;
 use macroquad_particles::{self as particles, Emitter, EmitterConfig};
+use mamdani::Mamdani;
 use std::{collections::HashMap, f32::consts::PI};
 
-use drone::Drone;
-use macroquad::prelude::*;
-use mie::{InputType, Inputs, Mamdani, Output, Y};
 use particles::{ColorCurve, Curve};
+use rules::{InputType, Inputs, Output, Y};
 
 fn smoke() -> particles::EmitterConfig {
     particles::EmitterConfig {
