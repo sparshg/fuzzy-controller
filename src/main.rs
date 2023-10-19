@@ -19,37 +19,6 @@ use std::{collections::HashMap, f32::consts::PI};
 use particles::{ColorCurve, Curve};
 use rules::{InputType, Inputs, Output, Yv, Y};
 
-fn smoke() -> particles::EmitterConfig {
-    particles::EmitterConfig {
-        lifetime: 0.8,
-        lifetime_randomness: 0.2,
-        amount: 40,
-        initial_direction_spread: 0.5,
-        initial_direction: vec2(0.0, 1.),
-        size_curve: Some(Curve {
-            points: bezier::Bezier::new((0., 0.4), (0.4, 1.))
-                .get_n_points(20)
-                .into_iter()
-                .map(|(x, y)| (x, 3. * y + 1.))
-                .collect(),
-            interpolation: particles::Interpolation::Linear,
-            resolution: 20,
-        }),
-        linear_accel: -4.,
-        initial_velocity: 15.,
-        size: 0.3,
-        size_randomness: 0.1,
-        initial_rotation_randomness: PI,
-        initial_angular_velocity: rand::gen_range(-1., 1.),
-        angular_damping: 0.5,
-        colors_curve: ColorCurve {
-            start: Color::new(1., 1., 1., 0.4),
-            mid: Color::new(1., 1., 1., 0.1),
-            end: Color::new(1., 1., 1., 0.),
-        },
-        ..Default::default()
-    }
-}
 fn window_conf() -> Conf {
     Conf {
         window_title: "Fuzzy Controller".to_string(),
@@ -80,11 +49,11 @@ async fn main() {
     let (vn, vz, vp) = (Inputs::Yv(Yv::N), Inputs::Yv(Yv::Z), Inputs::Yv(Yv::P));
     let mut m = Mamdani {
         rules: vec![
-            (yz & vp | yp & vp, Output::None),
-            (
-                yz & vn | yp & vn | yz & vz | yp & vz | yn & vp,
-                Output::Small,
-            ),
+            // (yp.into(), Output::None),
+            // (yz.into(), Output::Small),
+            // (yn.into(), Output::Large),
+            (yz & vp | yp & vp | yz & vz, Output::None),
+            (yz & vn | yp & vn | yn & vp, Output::Small),
             (yn & vn | yn & vz, Output::Large),
         ],
         inputs: HashMap::from([
@@ -123,10 +92,10 @@ async fn main() {
                 (Output::Small, tri(0.25, 0.5, 0.75)),
                 (Output::Large, tri(0.5, 0.75, 1.0)),
             ]),
-            -30.0..30.,
+            0.0..11.,
         ),
     };
-    dbg!(yz & vp | yp & vp);
+    // println!("{:?}", yz & vp | yp & vp);
     let mut drone = Drone::new(e1, e2);
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, rc::Rc};
+use std::{collections::HashMap, f32::consts::PI, hash::Hash, rc::Rc};
 
 use egui::{
     epaint::Shadow,
@@ -10,6 +10,9 @@ use egui_macroquad::egui::{
     plot::{Points, VLine},
 };
 use macroquad::prelude::*;
+use macroquad_particles::{ColorCurve, Curve};
+
+use crate::bezier;
 pub struct Graph<V>
 where
     V: Eq + Hash + Copy,
@@ -158,3 +161,35 @@ where
 //     });
 //     egui_macroquad::draw();
 // }
+
+pub fn smoke() -> macroquad_particles::EmitterConfig {
+    macroquad_particles::EmitterConfig {
+        lifetime: 0.8,
+        lifetime_randomness: 0.2,
+        amount: 40,
+        initial_direction_spread: 0.5,
+        initial_direction: vec2(0.0, 1.),
+        size_curve: Some(Curve {
+            points: bezier::Bezier::new((0., 0.4), (0.4, 1.))
+                .get_n_points(20)
+                .into_iter()
+                .map(|(x, y)| (x, 3. * y + 1.))
+                .collect(),
+            interpolation: macroquad_particles::Interpolation::Linear,
+            resolution: 20,
+        }),
+        linear_accel: -4.,
+        initial_velocity: 15.,
+        size: 0.3,
+        size_randomness: 0.1,
+        initial_rotation_randomness: PI,
+        initial_angular_velocity: rand::gen_range(-1., 1.),
+        angular_damping: 0.5,
+        colors_curve: ColorCurve {
+            start: Color::new(1., 1., 1., 0.4),
+            mid: Color::new(1., 1., 1., 0.1),
+            end: Color::new(1., 1., 1., 0.),
+        },
+        ..Default::default()
+    }
+}
