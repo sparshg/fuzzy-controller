@@ -112,9 +112,9 @@ impl Rule {
     }
 }
 
-impl Into<Rule> for Inputs {
-    fn into(self) -> Rule {
-        Rule::new(RuleNode::Input(self), None, None)
+impl From<Inputs> for Rule {
+    fn from(val: Inputs) -> Self {
+        Rule::new(RuleNode::Input(val), None, None)
     }
 }
 
@@ -210,6 +210,6 @@ impl Not for Rule {
     type Output = Rule;
 
     fn not(self: Rule) -> Self::Output {
-        Rule::new(RuleNode::Op(Op::Not(|x| 1. - x)), Some(self.into()), None)
+        Rule::new(RuleNode::Op(Op::Not(|x| 1. - x)), Some(self), None)
     }
 }

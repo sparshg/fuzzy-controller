@@ -9,14 +9,15 @@ mod state;
 mod ui;
 use drone::Drone;
 use egui_macroquad::egui;
-use funcs::{cliff, gauss, mount, smf, tri, zmf};
+use funcs::{cliff, mount, tri};
 use fuzzy::Fuzzy;
 use macroquad::prelude::*;
-use macroquad_particles::{self as particles, Emitter, EmitterConfig};
+use macroquad_particles::{Emitter, EmitterConfig};
 use mamdani::Mamdani;
-use std::{collections::HashMap, f32::consts::PI};
+use std::{collections::HashMap};
+use ui::smoke;
 
-use particles::{ColorCurve, Curve};
+
 use rules::{InputType, Inputs, Output, Yv, Y};
 
 fn window_conf() -> Conf {

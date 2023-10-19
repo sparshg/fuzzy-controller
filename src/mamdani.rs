@@ -47,7 +47,7 @@ impl Mamdani {
         let mut outputs = HashMap::new();
         // println!("{:?}", finputs);
         for (rule, out) in self.rules.iter() {
-            let a = self.resolve(&rule, &finputs);
+            let a = self.resolve(rule, &finputs);
             // println!("{:?}", out);
             println!("{:?}", a);
             outputs.insert(*out, a);
