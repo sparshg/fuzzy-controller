@@ -1,41 +1,46 @@
-use std::{collections::HashMap, f32::consts::PI, hash::Hash, rc::Rc};
+use std::{collections::HashMap, f32::consts::PI, hash::Hash, ops::Range, rc::Rc};
 
 use egui::{
     epaint::Shadow,
-    plot::{CoordinatesFormatter, Corner, HLine, Legend, Line, Plot, PlotPoints},
+    plot::{HLine, Legend, Line, Plot, PlotPoints},
     Color32, Frame,
 };
 use egui_macroquad::egui::{
     self,
-    plot::{Points, VLine},
+    plot::{Points, Text, VLine},
+    FontId, RichText,
 };
 use macroquad::prelude::*;
 use macroquad_particles::{ColorCurve, Curve};
 
 use crate::bezier;
-pub struct Graph<V>
-where
-    V: Eq + Hash + Copy,
-{
-    title: Vec<String>,
-    functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
+pub struct Graph {
+    funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
     colors: Vec<Color32>,
+    range: Range<f32>,
 }
 
-impl<V> Graph<V>
-where
-    V: Eq + Hash + Copy,
-{
+impl Graph {
     pub fn new(
-        title: Vec<String>,
-        functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
+        funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
         colors: Option<Vec<Color32>>,
+        range: Option<Range<f32>>,
     ) -> Self {
         Graph {
-            title,
-            colors: colors
-                .unwrap_or_else(|| (0..functions.len()).map(|_| Color32::WHITE).collect()),
-            functions,
+            colors: colors.unwrap_or_else(|| {
+                [
+                    Color32::LIGHT_BLUE,
+                    Color32::LIGHT_RED,
+                    Color32::from_rgb(220, 211, 39),
+                ]
+                .iter()
+                .copied()
+                .cycle()
+                .take(funcs.len())
+                .collect()
+            }),
+            funcs,
+            range: range.unwrap_or(0.0..1.0),
         }
     }
 
@@ -61,7 +66,7 @@ where
         inp: Option<f32>,
         out: Option<&Vec<(f32, f32)>>,
     ) {
-        egui::Window::new(&self.title[0])
+        egui::Window::new(&self.funcs[0].0)
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
                 outer_margin: egui::Margin::same(0.),
@@ -77,6 +82,7 @@ where
             .collapsible(false)
             .title_bar(false)
             .show(ctx, |ui| {
+                let _r = self.range.clone();
                 Plot::new("plot")
                     .width(size.0)
                     .height(size.1)
@@ -86,25 +92,34 @@ where
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .allow_boxed_zoom(false)
-                    .show_x(false)
-                    .show_y(false)
-                    .coordinates_formatter(
-                        Corner::LeftBottom,
-                        CoordinatesFormatter::new(|&point, _| {
-                            format!("x: {:.3} y: {:.3}", point.x, point.y)
-                        }),
-                    )
-                    .legend(Legend::default().position(egui::plot::Corner::RightBottom))
+                    .show_x(true)
+                    .show_y(true)
+                    .legend(Legend::default().position(egui::plot::Corner::RightTop))
                     .show(ui, |plot_ui| {
-                        // plot_ui.set_plot_bounds(PlotBounds::from_min_max(
-                        //     [0., -clamp * 1.1],
-                        //     [self.hsize as f64, clamp * 1.1],
-                        // ));
+                        plot_ui.text(
+                            Text::new(
+                                [0.02, 0.05].into(),
+                                RichText::new(self.range.start.to_string())
+                                    .color(Color32::WHITE)
+                                    .font(FontId::proportional(12.0)),
+                            )
+                            .color(Color32::WHITE),
+                        );
+                        plot_ui.text(
+                            Text::new(
+                                [0.98, 0.05].into(),
+                                RichText::new(self.range.end.to_string())
+                                    .color(Color32::WHITE)
+                                    .font(FontId::proportional(12.0)),
+                            )
+                            .color(Color32::WHITE),
+                        );
                         if let Some(x) = inp {
-                            plot_ui
-                                .vline(VLine::new(x.clamp(0., 1.)).color(Color32::GREEN).width(1.));
+                            plot_ui.vline(
+                                VLine::new(x.clamp(0., 1.)).color(Color32::GREEN).width(1.5),
+                            );
                         }
-                        for (i, (_, f)) in self.functions.iter().enumerate() {
+                        for (i, (_, f)) in self.funcs.iter().enumerate() {
                             plot_ui.line(
                                 Line::new(
                                     (0..=100)
@@ -115,8 +130,18 @@ where
                                         .collect::<PlotPoints>(),
                                 )
                                 .width(2.)
-                                .color(self.colors[i]), // .name(&self.title[i]),
+                                .color(self.colors[i])
+                                .name(&self.funcs[i].0),
                             );
+                            if let Some(x) = inp {
+                                plot_ui.points(
+                                    Points::new([x.clamp(0., 1.) as f64, f(x as f32) as f64])
+                                        // .name(format!("Hello"))
+                                        .filled(true)
+                                        .radius(4.)
+                                        .color(self.colors[i]),
+                                )
+                            }
                         }
                         if let Some(out) = out {
                             plot_ui.line(
@@ -130,8 +155,12 @@ where
                                 .width(4.)
                                 .color(Color32::GREEN), // .name(&self.title[i]),
                             );
-                            plot_ui.hline(HLine::new(out[0].1 as f64).color(Color32::GREEN));
-                            plot_ui.vline(VLine::new(out[0].0 as f64).color(Color32::GREEN));
+                            plot_ui.hline(
+                                HLine::new(out[0].1 as f64).width(1.5).color(Color32::GREEN),
+                            );
+                            plot_ui.vline(
+                                VLine::new(out[0].0 as f64).width(1.5).color(Color32::GREEN),
+                            );
                             plot_ui.points(
                                 Points::new([out[0].0 as f64, out[0].1 as f64])
                                     // .name(format!("Hello"))
@@ -146,21 +175,6 @@ where
             });
     }
 }
-
-// pub fn draw_ui<V>(_w: f32, forceplt: &Graph<V>, forceplt1: &Graph<V>)
-// where
-//     V: Eq + Hash + Copy,
-// {
-//     egui_macroquad::ui(|ctx: &egui::Context| {
-//         // ctx.set_debug_on_hover(true);
-//         // ctx.set_pixels_per_point(screen_width() / w);
-//         // forceplt.y(2.);
-//         // forceplt1.y(2.);
-//         // forceplt.draw(ctx);
-//         // forceplt1.draw(ctx);
-//     });
-//     egui_macroquad::draw();
-// }
 
 pub fn smoke() -> macroquad_particles::EmitterConfig {
     macroquad_particles::EmitterConfig {
@@ -192,4 +206,81 @@ pub fn smoke() -> macroquad_particles::EmitterConfig {
         },
         ..Default::default()
     }
+}
+
+pub fn draw_blue_grid(grid: f32, color: Color, thickness: f32, bold_every: i32, bold_thick: f32) {
+    push_camera_state();
+    set_camera(&Camera2D {
+        zoom: vec2(1., screen_width() / screen_height()),
+        ..Default::default()
+    });
+    draw_line(0., -1., 0., 1., bold_thick, color);
+    draw_line(-1., 0., 1., 0., bold_thick, color);
+    for i in 1..=(1. / grid as f32) as i32 {
+        let thickness = if i % bold_every == 0 {
+            bold_thick
+        } else {
+            thickness
+        };
+        draw_line(i as f32 * grid, -1., i as f32 * grid, 1., thickness, color);
+        draw_line(
+            -i as f32 * grid,
+            -1.,
+            -i as f32 * grid,
+            1.,
+            thickness,
+            color,
+        );
+        draw_line(-1., i as f32 * grid, 1., i as f32 * grid, thickness, color);
+        draw_line(
+            -1.,
+            -i as f32 * grid,
+            1.,
+            -i as f32 * grid,
+            thickness,
+            color,
+        );
+    }
+    pop_camera_state();
+}
+
+pub fn draw_vingette(tex: Texture2D) {
+    push_camera_state();
+    set_default_camera();
+    draw_texture_ex(
+        tex,
+        0.,
+        0.,
+        WHITE,
+        DrawTextureParams {
+            dest_size: Some(vec2(screen_width(), screen_height())),
+            ..Default::default()
+        },
+    );
+    pop_camera_state();
+}
+
+pub fn draw_title(ctx: &egui::Context) {
+    egui::Window::new("Fuzzy Controller")
+        .frame(Frame {
+            inner_margin: egui::Margin::same(0.),
+            outer_margin: egui::Margin::same(0.),
+            rounding: egui::Rounding::none(),
+            fill: Color32::TRANSPARENT,
+            shadow: Shadow::NONE,
+            stroke: egui::Stroke::NONE,
+        })
+        .current_pos((45., 15.))
+        .default_size((200., 50.))
+        .resizable(false)
+        .movable(false)
+        .collapsible(false)
+        .title_bar(false)
+        .show(ctx, |ui| {
+            ui.label(
+                RichText::new("Fuzzy Controller")
+                    .color(Color32::WHITE)
+                    .font(FontId::proportional(24.0)),
+            )
+        });
 }

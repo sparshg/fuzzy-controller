@@ -5,51 +5,90 @@ use std::{
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum InputType {
+    X,
     Y,
-    Yv,
+    Vy,
+    Th,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Inputs {
     Y(Y),
-    Yv(Yv),
+    Vy(Vy),
+    X(X),
+    Th(Th),
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum Output {
+pub enum Outputs {
+    Amp(Amp),
+    Diff(Diff),
+}
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum Amp {
     None,
     Small,
     Large,
 }
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum Diff {
+    NL,
+    NS,
+    Z,
+    PS,
+    PL,
+}
 
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum X {
+    N,
+    P,
+}
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Y {
     N,
-    Z,
     P,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
-pub enum Yv {
+pub enum Vy {
     N,
-    Z,
+    P,
+}
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum Th {
+    N,
     P,
 }
 
+impl Display for X {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            X::N => write!(f, "X-"),
+            X::P => write!(f, "X+"),
+        }
+    }
+}
 impl Display for Y {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Y::N => write!(f, "Y-"),
-            Y::Z => write!(f, "Y0"),
             Y::P => write!(f, "Y+"),
         }
     }
 }
-impl Display for Yv {
+impl Display for Vy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Yv::N => write!(f, "Yv-"),
-            Yv::Z => write!(f, "Yv0"),
-            Yv::P => write!(f, "Yv+"),
+            Vy::N => write!(f, "Vy-"),
+            Vy::P => write!(f, "Vy+"),
+        }
+    }
+}
+impl Display for Th {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Th::N => write!(f, "Th-"),
+            Th::P => write!(f, "Th+"),
         }
     }
 }
@@ -58,17 +97,39 @@ impl Display for Inputs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Inputs::Y(y) => write!(f, "{}", y),
-            Inputs::Yv(y) => write!(f, "{}", y),
+            Inputs::Vy(y) => write!(f, "{}", y),
+            Inputs::X(y) => write!(f, "{}", y),
+            Inputs::Th(y) => write!(f, "{}", y),
         }
     }
 }
 
-impl Display for Output {
+impl Display for Amp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Output::None => write!(f, "None"),
-            Output::Small => write!(f, "Small"),
-            Output::Large => write!(f, "Large"),
+            Amp::None => write!(f, "None"),
+            Amp::Small => write!(f, "Small"),
+            Amp::Large => write!(f, "Large"),
+        }
+    }
+}
+impl Display for Diff {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Diff::NL => write!(f, "NL"),
+            Diff::NS => write!(f, "NS"),
+            Diff::Z => write!(f, "Z"),
+            Diff::PS => write!(f, "PS"),
+            Diff::PL => write!(f, "PL"),
+        }
+    }
+}
+
+impl Display for Outputs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Outputs::Amp(y) => write!(f, "{}", y),
+            Outputs::Diff(y) => write!(f, "{}", y),
         }
     }
 }
@@ -77,7 +138,9 @@ impl Display for InputType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InputType::Y => write!(f, "Y"),
-            InputType::Yv => write!(f, "Yv"),
+            InputType::Vy => write!(f, "Vy"),
+            InputType::X => write!(f, "X"),
+            InputType::Th => write!(f, "Th"),
         }
     }
 }

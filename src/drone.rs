@@ -47,7 +47,7 @@ impl Drone {
         }
     }
 
-    pub fn update(&mut self, controller: &mut Mamdani, dt: f32) {
+    pub fn update(&mut self, controller: &mut Mamdani, controller2: &mut Mamdani, dt: f32) {
         let steps = if dt > 0.02 {
             ((self.steps * 60) as f32 * dt) as i32
         } else {
@@ -81,29 +81,28 @@ impl Drone {
                     // 5., 4.,
                 );
             }
-            let _amp = self
-                .pid1
-                .output(self.point.y - self.state.p.y, dt)
-                .clamp(0., 20.);
-            let o1 = self
-                .pid2
-                .output(self.state.p.x - self.point.x, dt)
-                .clamp(-0.8, 0.8);
-            // self.state.th = o1;
-            let _diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
-            // let diff = 0. as f32;
-            // self.Tl = self.t_m * (_amp - _diff).max(0.);
-            // self.Tr = self.t_m * (_amp + _diff).max(0.);
-            // controller.infer(&[(InputType::Y, 1.), (InputType::Yv, 0.)]);
-            let t = (controller.infer(&[
+            // let _amp = self
+            //     .pid1
+            //     .output(self.point.y - self.state.p.y, dt)
+            //     .clamp(0., 20.);
+            // let o1 = self
+            //     .pid2
+            //     .output(self.state.p.x - self.point.x, dt)
+            //     .clamp(-0.8, 0.8);
+            // let _diff = self.pid3.output(o1 - self.state.th, dt).clamp(-10., 10.);
+            let _amp = controller.infer(&[
                 (InputType::Y, self.state.p.y - self.point.y),
-                (InputType::Yv, self.state.v.y),
-            ]))
-            .max(0.);
+                (InputType::Vy, self.state.v.y),
+            ]);
+            let _diff = controller2.infer(&[
+                (InputType::X, self.state.p.x - self.point.x),
+                (InputType::Th, self.state.th),
+            ]);
+            // .clamp(-10., 10.);
             // dbg!(t);
             // println!("y: {} \t t: {}", self.state.x.y, t);
-            self.Tl = self.t_m * t;
-            self.Tr = self.t_m * t;
+            self.Tl = self.t_m * (_amp - _diff).max(0.);
+            self.Tr = self.t_m * (_amp + _diff).max(0.);
             self.smoke1.config.amount = (self.Tl * 0.5) as u32;
             self.smoke2.config.amount = (self.Tr * 0.5) as u32;
             let k1 = self.process_state(&self.state);
@@ -168,6 +167,34 @@ impl Drone {
         draw_circle(x, y, 0.1, color);
         draw_line(x, y, x + dx, y + dy, thickness, color);
         draw_circle(x + dx, y + dy, 0.1, color);
+        push_camera_state();
+        set_camera(&Camera2D {
+            zoom: vec2(1. / screen_width(), -1. / screen_height()),
+            ..Default::default()
+        });
+        draw_text_ex(
+            &format!("{:.2}", self.Tl),
+            (x - dx) * 100.,
+            (y - dy) * -100. - 25.,
+            TextParams {
+                font_size: 32 as u16,
+                font_scale: 1.0,
+                color,
+                ..Default::default()
+            },
+        );
+        draw_text_ex(
+            &format!("{:.2}", self.Tr),
+            (x + dx) * 100.,
+            (y + dy) * -100. - 25.,
+            TextParams {
+                font_size: 32 as u16,
+                font_scale: 1.0,
+                color,
+                ..Default::default()
+            },
+        );
+        pop_camera_state();
 
         draw_line(x, y, x - dx, y - dy, thickness, color);
         draw_circle(x - dx, y - dy, 0.1, color);

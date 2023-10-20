@@ -9,9 +9,9 @@ where
     V: Eq + Hash + Copy + Display,
 {
     members: usize,
-    pub functions: Rc<HashMap<V, Box<dyn Fn(f32) -> f32>>>,
+    pub functions: HashMap<V, Rc<dyn Fn(f32) -> f32>>,
     range: Range<f32>,
-    graph: Graph<V>,
+    graph: Graph,
     last_input: f32,
     last_output: Vec<(f32, f32)>,
     resolution: usize,
@@ -21,17 +21,23 @@ impl<V> Fuzzy<V>
 where
     V: Eq + Hash + Copy + Display,
 {
-    pub fn new(functions: HashMap<V, Box<dyn Fn(f32) -> f32>>, range: Range<f32>) -> Fuzzy<V> {
-        let f = Rc::new(functions);
+    pub fn new(functions: HashMap<V, Rc<dyn Fn(f32) -> f32>>, range: Range<f32>) -> Fuzzy<V> {
+        // let f = Rc::new(functions);
+        let mut titles: Vec<(String, Rc<dyn Fn(f32) -> f32>)> = functions
+            .iter()
+            .map(|(&x, y)| (x.to_string(), Rc::clone(y)))
+            .collect();
+        titles.sort_unstable_by_key(|(s, _)| {
+            let order = "NZLPSM";
+            s.chars()
+                .map(|c| order.find(c).unwrap_or(0) as u8)
+                .collect::<Vec<_>>()
+        });
         Fuzzy {
-            members: f.len(),
+            members: functions.len(),
+            graph: Graph::new(titles, None, Some(range.clone())),
             range,
-            graph: Graph::new(
-                f.keys().map(|x| x.to_string()).collect(),
-                Rc::clone(&f),
-                None,
-            ),
-            functions: f,
+            functions: functions,
             last_input: 0.,
             resolution: 100,
             last_output: vec![(0., 0.); 101],

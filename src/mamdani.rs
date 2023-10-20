@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use crate::{
     fuzzy::Fuzzy,
-    rules::{InputType, Inputs, Op, Output, Rule, RuleNode},
+    rules::{InputType, Inputs, Op, Outputs, Rule, RuleNode},
 };
 
 pub struct Mamdani {
-    pub rules: Vec<(Rule, Output)>,
+    pub rules: Vec<(Outputs, Rule)>,
     pub inputs: HashMap<InputType, Fuzzy<Inputs>>,
-    pub output: Fuzzy<Output>,
+    pub output: Fuzzy<Outputs>,
 }
 
 impl Mamdani {
@@ -46,10 +46,10 @@ impl Mamdani {
         // println!("{:?}", finputs);
         let mut outputs = HashMap::new();
         // println!("{:?}", finputs);
-        for (rule, out) in self.rules.iter() {
+        for (out, rule) in self.rules.iter() {
             let a = self.resolve(rule, &finputs);
             // println!("{:?}", out);
-            println!("{:?}", a);
+            // println!("{:?}", a);
             outputs.insert(*out, a);
         }
         // println!("{:?}", outputs);
