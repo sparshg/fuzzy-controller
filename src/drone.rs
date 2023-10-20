@@ -96,10 +96,12 @@ impl Drone {
             ]);
             let _diff = controller2.infer(&[
                 (InputType::X, self.state.p.x - self.point.x),
+                (InputType::Vx, self.state.v.x),
                 (InputType::Th, self.state.th),
+                (InputType::W, self.state.w),
             ]);
             // .clamp(-10., 10.);
-            // dbg!(t);
+            dbg!(&self.state.th);
             // println!("y: {} \t t: {}", self.state.x.y, t);
             self.Tl = self.t_m * (_amp - _diff).max(0.);
             self.Tr = self.t_m * (_amp + _diff).max(0.);
@@ -177,7 +179,7 @@ impl Drone {
             (x - dx) * 100.,
             (y - dy) * -100. - 25.,
             TextParams {
-                font_size: 32 as u16,
+                font_size: 32_u16,
                 font_scale: 1.0,
                 color,
                 ..Default::default()
@@ -188,7 +190,7 @@ impl Drone {
             (x + dx) * 100.,
             (y + dy) * -100. - 25.,
             TextParams {
-                font_size: 32 as u16,
+                font_size: 32_u16,
                 font_scale: 1.0,
                 color,
                 ..Default::default()

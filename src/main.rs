@@ -15,9 +15,9 @@ use macroquad::prelude::*;
 use macroquad_particles::{Emitter, EmitterConfig};
 use mamdani::Mamdani;
 use std::collections::HashMap;
-use ui::{draw_blue_grid, draw_title, draw_vingette, smoke};
+use ui::{draw_blue_grid, draw_title, smoke};
 
-use rules::{Amp, Diff, InputType, Inputs, Outputs, Th, Vy, X, Y};
+use rules::{Amp, Diff, InputType, Inputs, Outputs, Th, Vx, Vy, W, X, Y};
 
 fn window_conf() -> Conf {
     Conf {
@@ -46,41 +46,37 @@ async fn main() {
     });
     let (xn, xp) = (Inputs::X(X::N), Inputs::X(X::P));
     let (yn, yp) = (Inputs::Y(Y::N), Inputs::Y(Y::P));
-    let (vn, vp) = (Inputs::Vy(Vy::N), Inputs::Vy(Vy::P));
+    let (vyn, vyp) = (Inputs::Vy(Vy::N), Inputs::Vy(Vy::P));
+    let (vxn, vxp) = (Inputs::Vx(Vx::N), Inputs::Vx(Vx::P));
     let (thn, thp) = (Inputs::Th(Th::N), Inputs::Th(Th::P));
+    let (wn, wp) = (Inputs::W(W::N), Inputs::W(W::P));
     let mut m = Mamdani {
         rules: vec![
-            (Outputs::Amp(Amp::None), yp & vp),
-            (Outputs::Amp(Amp::Small), yp & vn | yn & vp),
-            (Outputs::Amp(Amp::Large), yn & vn),
+            (Outputs::Amp(Amp::Z), yp & vyp),
+            (Outputs::Amp(Amp::S), yp & vyn | yn & vyp),
+            (Outputs::Amp(Amp::L), yn & vyn),
         ],
         inputs: HashMap::from([
             (
                 InputType::Y,
                 Fuzzy::new(
-                    HashMap::from([
-                        (Inputs::Y(Y::N), zmf(0., 1.)),
-                        (Inputs::Y(Y::P), smf(0., 1.)),
-                    ]),
+                    HashMap::from([(yn, zmf(0., 1.)), (yp, smf(0., 1.))]),
                     -7.0..7.,
                 ),
             ),
             (
                 InputType::Vy,
                 Fuzzy::new(
-                    HashMap::from([
-                        (Inputs::Vy(Vy::N), zmf(0.25, 0.75)),
-                        (Inputs::Vy(Vy::P), smf(0.25, 0.75)),
-                    ]),
+                    HashMap::from([(vyn, zmf(0.25, 0.75)), (vyp, smf(0.25, 0.75))]),
                     -8.0..8.,
                 ),
             ),
         ]),
         output: Fuzzy::new(
             HashMap::from([
-                (Outputs::Amp(Amp::None), gbell(0.3, 3.5, 0.)),
-                (Outputs::Amp(Amp::Small), gbell(0.2, 3., 0.5)),
-                (Outputs::Amp(Amp::Large), gbell(0.2, 3., 1.)),
+                (Outputs::Amp(Amp::Z), gbell(0.3, 3.5, 0.)),
+                (Outputs::Amp(Amp::S), gbell(0.2, 3., 0.5)),
+                (Outputs::Amp(Amp::L), gbell(0.2, 3., 1.)),
             ]),
             0.0..10.,
         ),
@@ -88,48 +84,58 @@ async fn main() {
 
     let mut m2 = Mamdani {
         rules: vec![
-            (Outputs::Diff(Diff::NL), xn & thp),
-            (Outputs::Diff(Diff::NS), xn.into()),
-            (Outputs::Diff(Diff::Z), xn & xp & thn & thp),
-            (Outputs::Diff(Diff::PS), xp.into()),
-            (Outputs::Diff(Diff::PL), xp & thn),
+            (Outputs::Diff(Diff::NL), thp & vxn & wp),
+            (Outputs::Diff(Diff::NM), wp & (vxp & thp | vxn & thn & xp)),
+            (Outputs::Diff(Diff::NS), xn & vxn & (thn & wp | thp & wn)),
+            (Outputs::Diff(Diff::PS), xp & vxp & (thn & wp | thp & wn)),
+            (Outputs::Diff(Diff::PM), wn & (vxn & thn | vxp & thp & xn)),
+            (Outputs::Diff(Diff::PL), thn & vxp & wn),
         ],
         inputs: HashMap::from([
             (
                 InputType::X,
                 Fuzzy::new(
-                    HashMap::from([
-                        (Inputs::X(X::N), zmf(0., 1.)),
-                        (Inputs::X(X::P), smf(0., 1.)),
-                    ]),
-                    -7.0..7.,
+                    HashMap::from([(xn, zmf(0.1, 1.)), (xp, smf(0., 0.9))]),
+                    -9.0..9.,
+                ),
+            ),
+            (
+                InputType::Vx,
+                Fuzzy::new(
+                    HashMap::from([(vxn, zmf(0., 1.)), (vxp, smf(0., 1.))]),
+                    -4.0..4.,
                 ),
             ),
             (
                 InputType::Th,
                 Fuzzy::new(
-                    HashMap::from([
-                        (Inputs::Th(Th::N), zmf(0., 1.)),
-                        (Inputs::Th(Th::P), smf(0., 1.)),
-                    ]),
-                    -0.3..0.3,
+                    HashMap::from([(thn, zmf(0., 1.)), (thp, smf(0., 1.))]),
+                    -1.0..1.,
+                ),
+            ),
+            (
+                InputType::W,
+                Fuzzy::new(
+                    HashMap::from([(wn, zmf(0., 1.)), (wp, smf(0., 1.))]),
+                    -0.6..0.6,
                 ),
             ),
         ]),
         output: Fuzzy::new(
             HashMap::from([
-                (Outputs::Diff(Diff::NL), gbell(0.15, 3., 0.)),
-                (Outputs::Diff(Diff::NS), gbell(0.05, 3., 0.4)),
-                (Outputs::Diff(Diff::Z), gbell(0.05, 3., 0.5)),
-                (Outputs::Diff(Diff::PS), gbell(0.05, 3., 0.6)),
-                (Outputs::Diff(Diff::PL), gbell(0.15, 3., 1.)),
+                (Outputs::Diff(Diff::NL), gbell(0.2, 2.5, 0.)),
+                (Outputs::Diff(Diff::NM), gbell(0.1, 3., 0.1)),
+                (Outputs::Diff(Diff::NS), gbell(0.1, 3., 0.3)),
+                (Outputs::Diff(Diff::PS), gbell(0.1, 3., 0.7)),
+                (Outputs::Diff(Diff::PM), gbell(0.1, 3., 0.9)),
+                (Outputs::Diff(Diff::PL), gbell(0.2, 2.5, 1.)),
             ]),
             -10.0..10.,
         ),
     };
 
     let mut drone = Drone::new(e1, e2);
-    let vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
+    let _vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
 
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
@@ -147,6 +153,8 @@ async fn main() {
             m.output.draw(ctx, (10., 480.), (250., 200.), true);
             m2.inputs[&InputType::X].draw(ctx, (screen_width() - 260., 60.), (250., 200.), false);
             m2.inputs[&InputType::Th].draw(ctx, (screen_width() - 260., 270.), (250., 200.), false);
+            m2.inputs[&InputType::W].draw(ctx, (screen_width() - 520., 480.), (250., 200.), false);
+            m2.inputs[&InputType::Vx].draw(ctx, (screen_width() - 520., 270.), (250., 200.), false);
             m2.output
                 .draw(ctx, (screen_width() - 260., 480.), (250., 200.), true);
             draw_title(ctx);

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, f32::consts::PI, hash::Hash, ops::Range, rc::Rc};
+use std::{f32::consts::PI, ops::Range, rc::Rc};
 
 use egui::{
     epaint::Shadow,
@@ -135,7 +135,7 @@ impl Graph {
                             );
                             if let Some(x) = inp {
                                 plot_ui.points(
-                                    Points::new([x.clamp(0., 1.) as f64, f(x as f32) as f64])
+                                    Points::new([x.clamp(0., 1.) as f64, f(x) as f64])
                                         // .name(format!("Hello"))
                                         .filled(true)
                                         .radius(4.)
@@ -216,7 +216,7 @@ pub fn draw_blue_grid(grid: f32, color: Color, thickness: f32, bold_every: i32, 
     });
     draw_line(0., -1., 0., 1., bold_thick, color);
     draw_line(-1., 0., 1., 0., bold_thick, color);
-    for i in 1..=(1. / grid as f32) as i32 {
+    for i in 1..=(1. / grid) as i32 {
         let thickness = if i % bold_every == 0 {
             bold_thick
         } else {

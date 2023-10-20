@@ -7,7 +7,9 @@ use std::{
 pub enum InputType {
     X,
     Y,
+    W,
     Vy,
+    Vx,
     Th,
 }
 
@@ -15,8 +17,10 @@ pub enum InputType {
 pub enum Inputs {
     Y(Y),
     Vy(Vy),
+    Vx(Vx),
     X(X),
     Th(Th),
+    W(W),
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Outputs {
@@ -25,16 +29,17 @@ pub enum Outputs {
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Amp {
-    None,
-    Small,
-    Large,
+    Z,
+    S,
+    L,
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Diff {
     NL,
+    NM,
     NS,
-    Z,
     PS,
+    PM,
     PL,
 }
 
@@ -55,7 +60,17 @@ pub enum Vy {
     P,
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum Vx {
+    N,
+    P,
+}
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Th {
+    N,
+    P,
+}
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum W {
     N,
     P,
 }
@@ -84,11 +99,27 @@ impl Display for Vy {
         }
     }
 }
+impl Display for Vx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Vx::N => write!(f, "Vx-"),
+            Vx::P => write!(f, "Vx+"),
+        }
+    }
+}
 impl Display for Th {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Th::N => write!(f, "Th-"),
             Th::P => write!(f, "Th+"),
+        }
+    }
+}
+impl Display for W {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            W::N => write!(f, "W-"),
+            W::P => write!(f, "W+"),
         }
     }
 }
@@ -98,8 +129,10 @@ impl Display for Inputs {
         match self {
             Inputs::Y(y) => write!(f, "{}", y),
             Inputs::Vy(y) => write!(f, "{}", y),
+            Inputs::Vx(y) => write!(f, "{}", y),
             Inputs::X(y) => write!(f, "{}", y),
             Inputs::Th(y) => write!(f, "{}", y),
+            Inputs::W(y) => write!(f, "{}", y),
         }
     }
 }
@@ -107,9 +140,9 @@ impl Display for Inputs {
 impl Display for Amp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Amp::None => write!(f, "None"),
-            Amp::Small => write!(f, "Small"),
-            Amp::Large => write!(f, "Large"),
+            Amp::Z => write!(f, "None"),
+            Amp::S => write!(f, "Small"),
+            Amp::L => write!(f, "Large"),
         }
     }
 }
@@ -117,9 +150,10 @@ impl Display for Diff {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Diff::NL => write!(f, "NL"),
+            Diff::NM => write!(f, "NM"),
             Diff::NS => write!(f, "NS"),
-            Diff::Z => write!(f, "Z"),
             Diff::PS => write!(f, "PS"),
+            Diff::PM => write!(f, "PM"),
             Diff::PL => write!(f, "PL"),
         }
     }
@@ -139,8 +173,10 @@ impl Display for InputType {
         match self {
             InputType::Y => write!(f, "Y"),
             InputType::Vy => write!(f, "Vy"),
+            InputType::Vx => write!(f, "Vx"),
             InputType::X => write!(f, "X"),
             InputType::Th => write!(f, "Th"),
+            InputType::W => write!(f, "W"),
         }
     }
 }

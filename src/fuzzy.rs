@@ -28,7 +28,7 @@ where
             .map(|(&x, y)| (x.to_string(), Rc::clone(y)))
             .collect();
         titles.sort_unstable_by_key(|(s, _)| {
-            let order = "NZLPSM";
+            let order = "NZLPSM-+";
             s.chars()
                 .map(|c| order.find(c).unwrap_or(0) as u8)
                 .collect::<Vec<_>>()
@@ -37,7 +37,7 @@ where
             members: functions.len(),
             graph: Graph::new(titles, None, Some(range.clone())),
             range,
-            functions: functions,
+            functions,
             last_input: 0.,
             resolution: 100,
             last_output: vec![(0., 0.); 101],
