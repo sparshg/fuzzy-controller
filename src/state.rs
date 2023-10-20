@@ -1,4 +1,4 @@
-use macroquad::prelude::Vec2;
+use macroquad::prelude::{vec2, Vec2};
 
 #[derive(Clone, PartialEq, Debug)]
 
@@ -11,7 +11,7 @@ pub struct State {
 
 impl Default for State {
     fn default() -> Self {
-        Self::from(Vec2::ZERO, Vec2::ZERO, 0., 0.0)
+        Self::from(vec2(5.75, 0.), Vec2::ZERO, 0., 0.0)
     }
 }
 

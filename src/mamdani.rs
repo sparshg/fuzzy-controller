@@ -16,7 +16,12 @@ impl Mamdani {
         // println!("{:?}", crisp);
         crisp
             .iter()
-            .flat_map(|(i, x)| self.inputs.get_mut(i).unwrap().fuzzify(*x))
+            .flat_map(|(i, x)| {
+                self.inputs
+                    .get_mut(i)
+                    .expect(&format!("{} not found in memberships", i))
+                    .fuzzify(*x)
+            })
             .collect()
     }
 

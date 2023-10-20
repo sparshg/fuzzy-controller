@@ -38,6 +38,7 @@ pub enum Diff {
     NL,
     NM,
     NS,
+    Z,
     PS,
     PM,
     PL,
@@ -46,6 +47,7 @@ pub enum Diff {
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum X {
     N,
+    Z,
     P,
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -67,6 +69,7 @@ pub enum Vx {
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Th {
     N,
+    Z,
     P,
 }
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -79,6 +82,7 @@ impl Display for X {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             X::N => write!(f, "X-"),
+            X::Z => write!(f, "X0"),
             X::P => write!(f, "X+"),
         }
     }
@@ -111,6 +115,7 @@ impl Display for Th {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Th::N => write!(f, "Th-"),
+            Th::Z => write!(f, "Th0"),
             Th::P => write!(f, "Th+"),
         }
     }
@@ -152,6 +157,7 @@ impl Display for Diff {
             Diff::NL => write!(f, "NL"),
             Diff::NM => write!(f, "NM"),
             Diff::NS => write!(f, "NS"),
+            Diff::Z => write!(f, "Z"),
             Diff::PS => write!(f, "PS"),
             Diff::PM => write!(f, "PM"),
             Diff::PL => write!(f, "PL"),

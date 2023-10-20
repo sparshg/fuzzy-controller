@@ -94,7 +94,11 @@ impl Graph {
                     .allow_boxed_zoom(false)
                     .show_x(true)
                     .show_y(true)
-                    .legend(Legend::default().position(egui::plot::Corner::RightTop))
+                    .legend(
+                        Legend::default()
+                            .background_alpha(0.)
+                            .position(egui::plot::Corner::RightTop),
+                    )
                     .show(ui, |plot_ui| {
                         plot_ui.text(
                             Text::new(

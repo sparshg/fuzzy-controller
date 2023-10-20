@@ -43,7 +43,7 @@ impl Drone {
             pid1: PID::new(4., 2., 2.),
             pid2: PID::new(0.1, 0., 0.15),
             pid3: PID::new(5., 0., 2.),
-            point: vec2(0., 0.),
+            point: vec2(5.75, 0.),
         }
     }
 
@@ -100,8 +100,10 @@ impl Drone {
                 (InputType::Th, self.state.th),
                 (InputType::W, self.state.w),
             ]);
+            // let _diff = 0.0;
             // .clamp(-10., 10.);
-            dbg!(&self.state.th);
+            // dbg!(&_diff);
+            // self.state.w = self.state.w.clamp(-0.2, 0.2);
             // println!("y: {} \t t: {}", self.state.x.y, t);
             self.Tl = self.t_m * (_amp - _diff).max(0.);
             self.Tr = self.t_m * (_amp + _diff).max(0.);
