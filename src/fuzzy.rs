@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display, hash::Hash, ops::Range, rc::Rc};
 
 use egui_macroquad::egui::Context;
 
-use crate::ui::Graph;
+use crate::{ui::Graph};
 
 pub struct Fuzzy<V>
 where
@@ -21,7 +21,11 @@ impl<V> Fuzzy<V>
 where
     V: Eq + Hash + Copy + Display,
 {
-    pub fn new(functions: HashMap<V, Rc<dyn Fn(f32) -> f32>>, range: Range<f32>) -> Fuzzy<V> {
+    pub fn new(
+        input_type: impl Display,
+        functions: HashMap<V, Rc<dyn Fn(f32) -> f32>>,
+        range: Range<f32>,
+    ) -> Fuzzy<V> {
         // let f = Rc::new(functions);
         let mut titles: Vec<(String, Rc<dyn Fn(f32) -> f32>)> = functions
             .iter()
@@ -35,7 +39,7 @@ where
         });
         Fuzzy {
             members: functions.len(),
-            graph: Graph::new(titles, None, Some(range.clone())),
+            graph: Graph::new(input_type.to_string(), titles, None, Some(range.clone())),
             range,
             functions,
             last_input: 0.,

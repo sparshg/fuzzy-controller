@@ -19,7 +19,7 @@ impl Mamdani {
             .flat_map(|(i, x)| {
                 self.inputs
                     .get_mut(i)
-                    .expect(&format!("{} not found in memberships", i))
+                    .unwrap_or_else(|| panic!("{} not found in memberships", i))
                     .fuzzify(*x)
             })
             .collect()

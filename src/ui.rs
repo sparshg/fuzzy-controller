@@ -15,6 +15,7 @@ use macroquad_particles::{ColorCurve, Curve};
 
 use crate::bezier;
 pub struct Graph {
+    title: String,
     funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
     colors: Vec<Color32>,
     range: Range<f32>,
@@ -22,16 +23,19 @@ pub struct Graph {
 
 impl Graph {
     pub fn new(
+        title: String,
         funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
         colors: Option<Vec<Color32>>,
         range: Option<Range<f32>>,
     ) -> Self {
         Graph {
+            title,
             colors: colors.unwrap_or_else(|| {
                 [
                     Color32::LIGHT_BLUE,
                     Color32::LIGHT_RED,
                     Color32::from_rgb(220, 211, 39),
+                    Color32::LIGHT_GREEN,
                 ]
                 .iter()
                 .copied()
@@ -66,7 +70,7 @@ impl Graph {
         inp: Option<f32>,
         out: Option<&Vec<(f32, f32)>>,
     ) {
-        egui::Window::new(&self.funcs[0].0)
+        egui::Window::new(&self.title)
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
                 outer_margin: egui::Margin::same(0.),
@@ -183,9 +187,9 @@ impl Graph {
 pub fn smoke() -> macroquad_particles::EmitterConfig {
     macroquad_particles::EmitterConfig {
         lifetime: 0.8,
-        lifetime_randomness: 0.2,
-        amount: 40,
-        initial_direction_spread: 0.5,
+        lifetime_randomness: 0.1,
+        amount: 50,
+        initial_direction_spread: 0.4,
         initial_direction: vec2(0.0, 1.),
         size_curve: Some(Curve {
             points: bezier::Bezier::new((0., 0.4), (0.4, 1.))
@@ -196,10 +200,10 @@ pub fn smoke() -> macroquad_particles::EmitterConfig {
             interpolation: macroquad_particles::Interpolation::Linear,
             resolution: 20,
         }),
-        linear_accel: -4.,
-        initial_velocity: 15.,
-        size: 0.3,
-        size_randomness: 0.1,
+        linear_accel: -3.,
+        initial_velocity: 12.,
+        size: 0.35,
+        size_randomness: 0.05,
         initial_rotation_randomness: PI,
         initial_angular_velocity: rand::gen_range(-1., 1.),
         angular_damping: 0.5,

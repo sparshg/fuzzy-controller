@@ -19,6 +19,8 @@ use ui::{draw_blue_grid, draw_title, smoke};
 
 use rules::{Amp, Diff, InputType, Inputs, Outputs, Th, Vx, Vy, W, X, Y};
 
+use crate::rules::Rule;
+
 fn window_conf() -> Conf {
     Conf {
         window_title: "Fuzzy Controller".to_string(),
@@ -60,6 +62,7 @@ async fn main() {
             (
                 InputType::Y,
                 Fuzzy::new(
+                    InputType::Y,
                     HashMap::from([(yn, zmf(0., 1.)), (yp, smf(0., 1.))]),
                     -7.0..7.,
                 ),
@@ -67,12 +70,14 @@ async fn main() {
             (
                 InputType::Vy,
                 Fuzzy::new(
+                    InputType::Vy,
                     HashMap::from([(vyn, zmf(0.25, 0.75)), (vyp, smf(0.25, 0.75))]),
                     -8.0..8.,
                 ),
             ),
         ]),
         output: Fuzzy::new(
+            "Amp",
             HashMap::from([
                 (Outputs::Amp(Amp::Z), gbell(0.3, 3.5, 0.)),
                 (Outputs::Amp(Amp::S), gbell(0.2, 3., 0.5)),
@@ -105,6 +110,10 @@ async fn main() {
         vxn & thp & xp,
     ];
 
+    fn r(v: &Vec<Rule>, i: usize) -> Rule {
+        v[i].clone()
+    }
+
     let mut m2 = Mamdani {
         rules: vec![
             // (Outputs::Diff(Diff::NL), thp & xn & wp & vxn),
@@ -125,13 +134,33 @@ async fn main() {
             //     xp & (wn & (thp & vxp | thn & vxn) | wp & thn & vxp),
             // ),
             // (Outputs::Diff(Diff::PL), thn & xp & wn & vxp),
-            (Outputs::Diff(Diff::NL), vxn & thp & xn),
-            (Outputs::Diff(Diff::NM), vxp & thp | vxn & thp & (xz | xp)),
-            (Outputs::Diff(Diff::NS), thz & xn | vxn & thz & xz | wp),
+            (Outputs::Diff(Diff::NL), r(&tn, 6) | r(&tn, 3)),
+            (
+                Outputs::Diff(Diff::NM),
+                r(&tn, 8) | r(&tp, 6) | r(&tp, 7) | r(&tn, 7),
+            ),
+            (
+                Outputs::Diff(Diff::NS),
+                r(&tp, 3) | r(&tp, 8) | r(&tn, 4) | wp,
+            ),
             (Outputs::Diff(Diff::Z), xz & thz),
-            (Outputs::Diff(Diff::PS), thz & xp | vxp & thz & xz | wn),
-            (Outputs::Diff(Diff::PM), vxn & thn | vxp & thn & (xz | xn)),
-            (Outputs::Diff(Diff::PL), vxp & thn & xp),
+            (
+                Outputs::Diff(Diff::PS),
+                r(&tp, 4) | r(&tn, 5) | r(&tn, 0) | wn,
+            ),
+            (
+                Outputs::Diff(Diff::PM),
+                r(&tp, 0) | r(&tp, 1) | r(&tn, 2) | r(&tn, 1),
+            ),
+            (Outputs::Diff(Diff::PL), r(&tp, 5) | r(&tp, 2)),
+            // (Outputs::Diff(Diff::NL), vxn & thp & xn),
+            // (Outputs::Diff(Diff::NM), vxp & thp | vxn & thp & (xz | xp)),
+            // (Outputs::Diff(Diff::NS), thz & xn | vxn & thz & xz | wp),
+            // (Outputs::Diff(Diff::Z), xz & thz),
+            // (Outputs::Diff(Diff::PS), thz & xp | vxp & thz & xz | wn),
+            // (Outputs::Diff(Diff::PM), vxn & thn | vxp & thn & (xz | xn)),
+            // (Outputs::Diff(Diff::PL), vxp & thn & xp),
+
             // (Outputs::Diff(Diff::NL), xn & thp),
             // (Outputs::Diff(Diff::NM), xz & thp),
             // (Outputs::Diff(Diff::NS), xn & (thn | thz)),
@@ -151,9 +180,10 @@ async fn main() {
             (
                 InputType::X,
                 Fuzzy::new(
+                    InputType::X,
                     HashMap::from([
                         (xn, zmf(0., 0.9)),
-                        (xz, gbell(0.15, 2., 0.5)),
+                        (xz, gbell(0.2, 1.5, 0.5)),
                         (xp, smf(0.1, 1.)),
                     ]),
                     -10.0..10.,
@@ -162,6 +192,7 @@ async fn main() {
             (
                 InputType::Vx,
                 Fuzzy::new(
+                    InputType::Vx,
                     HashMap::from([(vxn, zmf(0., 1.)), (vxp, smf(0., 1.))]),
                     -4.0..4.,
                 ),
@@ -169,30 +200,33 @@ async fn main() {
             (
                 InputType::Th,
                 Fuzzy::new(
+                    InputType::Th,
                     HashMap::from([
                         (thn, zmf(0., 0.9)),
                         (thz, gbell(0.15, 2., 0.5)),
                         (thp, smf(0.1, 1.)),
                     ]),
-                    -1.0..1.,
+                    -0.5..0.5,
                 ),
             ),
             (
                 InputType::W,
                 Fuzzy::new(
+                    InputType::W,
                     HashMap::from([(wn, zmf(0., 1.)), (wp, smf(0., 1.))]),
                     -0.6..0.6,
                 ),
             ),
         ]),
         output: Fuzzy::new(
+            "Diff",
             HashMap::from([
                 (Outputs::Diff(Diff::NL), gbell(0.1, 3., 0.)),
-                (Outputs::Diff(Diff::NM), gbell(0.1, 3., 0.25)),
+                (Outputs::Diff(Diff::NM), gbell(0.1, 3., 0.3)),
                 (Outputs::Diff(Diff::NS), gbell(0.08, 3., 0.4)),
-                (Outputs::Diff(Diff::Z), gbell(0.05, 3., 0.5)),
+                (Outputs::Diff(Diff::Z), gbell(0.02, 3., 0.5)),
                 (Outputs::Diff(Diff::PS), gbell(0.08, 3., 0.6)),
-                (Outputs::Diff(Diff::PM), gbell(0.1, 3., 0.75)),
+                (Outputs::Diff(Diff::PM), gbell(0.1, 3., 0.7)),
                 (Outputs::Diff(Diff::PL), gbell(0.1, 3., 1.)),
             ]),
             -10.0..10.,
@@ -208,7 +242,7 @@ async fn main() {
         }
 
         clear_background(BLACK);
-        draw_blue_grid(0.15, DARKGRAY, 0.001, 3, 0.003);
+        draw_blue_grid(0.075, DARKGRAY, 0.001, 6, 0.003);
         drone.update(&mut m, &mut m2, get_frame_time());
         drone.display(WHITE, 0.05);
         // draw_ui(1280., &gr, &gr2);
@@ -216,6 +250,7 @@ async fn main() {
             let H = 200.;
             let W = 250.;
             let gap = 10.;
+            let title_gap = 0.;
             let f = (2. * W - gap) / (3. * W);
             let h = f * H;
             let w = f * W;
@@ -223,13 +258,27 @@ async fn main() {
             m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), false);
             m2.inputs[&InputType::X].draw(ctx, (w + 2. * gap, top), (w, h), false);
             m2.inputs[&InputType::Th].draw(ctx, (2. * w + 3. * gap, top), (w, h), false);
-            m.inputs[&InputType::Vy].draw(ctx, (gap, top + h + gap), (w, h), false);
-            m2.inputs[&InputType::Vx].draw(ctx, (w + 2. * gap, top + h + gap), (w, h), false);
-            m2.inputs[&InputType::W].draw(ctx, (2. * w + 3. * gap, top + h + gap), (w, h), false);
+            m.inputs[&InputType::Vy].draw(ctx, (gap, top + h + gap + title_gap), (w, h), false);
+            m2.inputs[&InputType::Vx].draw(
+                ctx,
+                (w + 2. * gap, top + h + gap + title_gap),
+                (w, h),
+                false,
+            );
+            m2.inputs[&InputType::W].draw(
+                ctx,
+                (2. * w + 3. * gap, top + h + gap + title_gap),
+                (w, h),
+                false,
+            );
             m.output
-                .draw(ctx, (gap, top + 2. * (h + gap)), (W, H), true);
-            m2.output
-                .draw(ctx, (W + 2. * gap, top + 2. * (h + gap)), (W, H), true);
+                .draw(ctx, (gap, top + 2. * (h + gap + title_gap)), (W, H), true);
+            m2.output.draw(
+                ctx,
+                (W + 2. * gap, top + 2. * (h + gap + title_gap)),
+                (W, H),
+                true,
+            );
             draw_title(ctx);
             // .ui(ctx);
         });

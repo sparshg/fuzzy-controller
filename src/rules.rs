@@ -145,9 +145,9 @@ impl Display for Inputs {
 impl Display for Amp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Amp::Z => write!(f, "None"),
-            Amp::S => write!(f, "Small"),
-            Amp::L => write!(f, "Large"),
+            Amp::Z => write!(f, "Z"),
+            Amp::S => write!(f, "S"),
+            Amp::L => write!(f, "L"),
         }
     }
 }
@@ -187,20 +187,20 @@ impl Display for InputType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Op {
     And(fn(f32, f32) -> f32),
     Or(fn(f32, f32) -> f32),
     Not(fn(f32) -> f32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RuleNode {
     Input(Inputs),
     Op(Op),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rule {
     pub val: RuleNode,
     pub left: Option<Box<Rule>>,
