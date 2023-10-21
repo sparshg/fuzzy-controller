@@ -259,8 +259,6 @@ async fn main() {
                 true,
             );
         });
-        // println!("{:?}", fuzzied);
-        // panic!("");
         egui_macroquad::draw();
 
         push_camera_state();
@@ -323,11 +321,7 @@ async fn main() {
             (&fuzzied[&InputType::W], &[1.], None),
         );
 
-        // draw_rules(50., (200., 500.), (3, 3));
-        // draw_rules(50., (390., 500.), (2, 2));
-        // if is_key_down(KeyCode::Space) {
         draw_vingette(vingette);
-        // }
         pop_camera_state();
         next_frame().await;
     }

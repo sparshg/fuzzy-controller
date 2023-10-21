@@ -18,9 +18,9 @@ pub struct Drone {
     Tr: f32,
     smoke1: Emitter,
     smoke2: Emitter,
-    pid1: PID,
-    pid2: PID,
-    pid3: PID,
+    // pid1: PID,
+    // pid2: PID,
+    // pid3: PID,
     point: Vec2,
 }
 
@@ -40,9 +40,9 @@ impl Drone {
             enable: true,
             smoke1: e1,
             smoke2: e2,
-            pid1: PID::new(4., 2., 2.),
-            pid2: PID::new(0.1, 0., 0.15),
-            pid3: PID::new(5., 0., 2.),
+            // pid1: PID::new(4., 2., 2.),
+            // pid2: PID::new(0.1, 0., 0.15),
+            // pid3: PID::new(5., 0., 2.),
             point: vec2(5.75, 0.),
         }
     }
@@ -137,20 +137,6 @@ impl Drone {
             (self.Tr - self.Tl) / (self.l * (2. * self.m + self.M / 12.)),
         )
     }
-
-    // pub fn get_potential_energy(&self) -> f32 {
-    //     // with respect to ground
-    //     -self.m3 * self.g * self.l * self.state.th.cos()
-    // }
-    // pub fn get_kinetic_energy(&self) -> f32 {
-    //     0.5 * self.m1 * self.state.v * self.state.v
-    //         + 0.5 * self.m2 * self.state.w * self.state.w * self.l * self.l
-    //         + self.m3 * self.state.v * self.state.w * self.l * self.state.th.cos()
-    // }
-    // pub fn get_total_energy(&self) -> f32 {
-    //     self.get_potential_energy() + self.get_kinetic_energy()
-    // }
-
     pub fn display(&mut self, color: Color, thickness: f32) {
         // draw a 2d drone with arm length of l
         let (x, y) = self.state.p.into();
