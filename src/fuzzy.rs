@@ -87,6 +87,7 @@ where
         ctx: &Context,
         pos: (f32, f32),
         size: (f32, f32),
+        legends: bool,
         is_output: bool,
     ) -> Vec<f32> {
         self.graph.draw(
@@ -98,6 +99,7 @@ where
             } else {
                 Some(self.last_input)
             },
+            legends,
             if is_output {
                 Some(&self.last_output)
             } else {

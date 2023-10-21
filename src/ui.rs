@@ -66,6 +66,7 @@ impl Graph {
         pos: (f32, f32),
         size: (f32, f32),
         inp: Option<f32>,
+        legends: bool,
         out: Option<&Vec<(f32, f32)>>,
     ) -> Vec<f32> {
         let mut memberships = vec![0.; self.funcs.len()];
@@ -75,8 +76,6 @@ impl Graph {
                 outer_margin: egui::Margin::same(0.),
                 rounding: egui::Rounding::none(),
                 shadow: Shadow::NONE,
-                // stroke: egui::Stroke::new(2., Color32::WHITE),
-                // fill: Color32::TRANSPARENT,
                 ..Default::default()
             })
             .current_pos(pos)
@@ -87,93 +86,89 @@ impl Graph {
             .title_bar(false)
             .show(ctx, |ui| {
                 let _r = self.range.clone();
-                Plot::new("plot")
+                let mut p = Plot::new("plot")
                     .width(size.0)
                     .height(size.1)
                     .show_axes([false, false])
-                    .show_background(false)
+                    // .show_background(false)
                     .allow_drag(false)
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .allow_boxed_zoom(false)
                     .show_x(true)
-                    .show_y(true)
-                    .legend(
+                    .show_y(true);
+                if legends {
+                    p = p.legend(
                         Legend::default()
                             .background_alpha(0.)
                             .position(egui::plot::Corner::RightTop),
-                    )
-                    .show(ui, |plot_ui| {
-                        plot_ui.text(
-                            Text::new(
-                                [0.02, 0.05].into(),
-                                RichText::new(self.range.start.to_string())
-                                    .color(Color32::WHITE)
-                                    .font(FontId::proportional(12.0)),
-                            )
-                            .color(Color32::WHITE),
-                        );
-                        plot_ui.text(
-                            Text::new(
-                                [0.98, 0.05].into(),
-                                RichText::new(self.range.end.to_string())
-                                    .color(Color32::WHITE)
-                                    .font(FontId::proportional(12.0)),
-                            )
-                            .color(Color32::WHITE),
+                    );
+                }
+                p.show(ui, |plot_ui| {
+                    plot_ui.text(
+                        Text::new(
+                            [0.02, 0.05].into(),
+                            RichText::new(self.range.start.to_string())
+                                .color(Color32::WHITE)
+                                .font(FontId::proportional(12.0)),
+                        )
+                        .color(Color32::WHITE),
+                    );
+                    plot_ui.text(
+                        Text::new(
+                            [0.98, 0.05].into(),
+                            RichText::new(self.range.end.to_string())
+                                .color(Color32::WHITE)
+                                .font(FontId::proportional(12.0)),
+                        )
+                        .color(Color32::WHITE),
+                    );
+                    if let Some(x) = inp {
+                        plot_ui.vline(VLine::new(x.clamp(0., 1.)).color(Color32::GREEN).width(1.5));
+                    }
+                    for (i, (_, f)) in self.funcs.iter().enumerate() {
+                        plot_ui.line(
+                            Line::new(self.lines[i].clone())
+                                .width(2.)
+                                .color(self.colors[i])
+                                .name(&self.funcs[i].0),
                         );
                         if let Some(x) = inp {
-                            plot_ui.vline(
-                                VLine::new(x.clamp(0., 1.)).color(Color32::GREEN).width(1.5),
-                            );
-                        }
-                        for (i, (_, f)) in self.funcs.iter().enumerate() {
-                            plot_ui.line(
-                                Line::new(self.lines[i].clone())
-                                    .width(2.)
-                                    .color(self.colors[i])
-                                    .name(&self.funcs[i].0),
-                            );
-                            if let Some(x) = inp {
-                                memberships[i] = f(x);
-                                plot_ui.points(
-                                    Points::new([x.clamp(0., 1.) as f64, f(x) as f64])
-                                        // .name(format!("Hello"))
-                                        .filled(true)
-                                        .radius(4.)
-                                        .color(self.colors[i]),
-                                )
-                            }
-                        }
-                        if let Some(out) = out {
-                            plot_ui.line(
-                                Line::new(
-                                    out.iter()
-                                        .skip(1)
-                                        .map(|(x, y)| [*x as f64, *y as f64])
-                                        .collect::<PlotPoints>(),
-                                )
-                                .fill(0.)
-                                .width(4.)
-                                .color(Color32::GREEN), // .name(&self.title[i]),
-                            );
-                            plot_ui.hline(
-                                HLine::new(out[0].1 as f64).width(1.5).color(Color32::GREEN),
-                            );
-                            plot_ui.vline(
-                                VLine::new(out[0].0 as f64).width(1.5).color(Color32::GREEN),
-                            );
+                            memberships[i] = f(x);
                             plot_ui.points(
-                                Points::new([out[0].0 as f64, out[0].1 as f64])
+                                Points::new([x.clamp(0., 1.) as f64, f(x) as f64])
                                     // .name(format!("Hello"))
                                     .filled(true)
-                                    .radius(6.)
-                                    .color(Color32::GREEN)
-                                    .shape(egui::plot::MarkerShape::Cross),
-                            );
+                                    .radius(4.)
+                                    .color(self.colors[i]),
+                            )
                         }
-                    })
-                    .response
+                    }
+                    if let Some(out) = out {
+                        plot_ui.line(
+                            Line::new(
+                                out.iter()
+                                    .skip(1)
+                                    .map(|(x, y)| [*x as f64, *y as f64])
+                                    .collect::<PlotPoints>(),
+                            )
+                            .fill(0.)
+                            .width(4.)
+                            .color(Color32::GREEN), // .name(&self.title[i]),
+                        );
+                        plot_ui.hline(HLine::new(out[0].1 as f64).width(1.5).color(Color32::GREEN));
+                        plot_ui.vline(VLine::new(out[0].0 as f64).width(1.5).color(Color32::GREEN));
+                        plot_ui.points(
+                            Points::new([out[0].0 as f64, out[0].1 as f64])
+                                // .name(format!("Hello"))
+                                .filled(true)
+                                .radius(6.)
+                                .color(Color32::GREEN)
+                                .shape(egui::plot::MarkerShape::Cross),
+                        );
+                    }
+                })
+                .response
             });
         memberships
     }

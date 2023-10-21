@@ -195,6 +195,7 @@ async fn main() {
 
     let mut drone = Drone::new(e1, e2);
     let vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
+    let mut legends = false;
 
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
@@ -218,19 +219,31 @@ async fn main() {
         egui_macroquad::ui(|ctx: &egui::Context| {
             fuzzied.insert(
                 InputType::Y,
-                m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), false),
+                m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), legends, false),
             );
             fuzzied.insert(
                 InputType::X,
-                m2.inputs[&InputType::X].draw(ctx, (w + 2. * gap, top), (w, h), false),
+                m2.inputs[&InputType::X].draw(ctx, (w + 2. * gap, top), (w, h), legends, false),
             );
             fuzzied.insert(
                 InputType::Th,
-                m2.inputs[&InputType::Th].draw(ctx, (2. * w + 3. * gap, top), (w, h), false),
+                m2.inputs[&InputType::Th].draw(
+                    ctx,
+                    (2. * w + 3. * gap, top),
+                    (w, h),
+                    legends,
+                    false,
+                ),
             );
             fuzzied.insert(
                 InputType::Vy,
-                m.inputs[&InputType::Vy].draw(ctx, (gap, top + h + gap + title_gap), (w, h), false),
+                m.inputs[&InputType::Vy].draw(
+                    ctx,
+                    (gap, top + h + gap + title_gap),
+                    (w, h),
+                    legends,
+                    false,
+                ),
             );
             fuzzied.insert(
                 InputType::Vx,
@@ -238,6 +251,7 @@ async fn main() {
                     ctx,
                     (w + 2. * gap, top + h + gap + title_gap),
                     (w, h),
+                    legends,
                     false,
                 ),
             );
@@ -247,15 +261,22 @@ async fn main() {
                     ctx,
                     (2. * w + 3. * gap, top + h + gap + title_gap),
                     (w, h),
+                    legends,
                     false,
                 ),
             );
-            m.output
-                .draw(ctx, (gap, top + 2. * (h + gap + title_gap)), (W, H), true);
+            m.output.draw(
+                ctx,
+                (gap, top + 2. * (h + gap + title_gap)),
+                (W, H),
+                legends,
+                true,
+            );
             m2.output.draw(
                 ctx,
                 (W + 2. * gap, top + 2. * (h + gap + title_gap)),
                 (W, H),
+                legends,
                 true,
             );
         });
@@ -335,6 +356,25 @@ async fn main() {
             (&[""], &[""], &[ns, ps], &[wp, wn]),
             (&fuzzied[&InputType::W], &[1.], None),
         );
+
+        draw_text(
+            &("Use desktop version, web version has terrible performance. FPS: ".to_string()
+                + &get_fps().to_string()),
+            10.,
+            720.,
+            16.,
+            WHITE,
+        );
+        draw_text(
+            "Press <space> to toggle legends (hide to improve performance).",
+            10.,
+            740.,
+            16.,
+            WHITE,
+        );
+        if is_key_pressed(KeyCode::Space) {
+            legends = !legends;
+        }
 
         draw_vingette(vingette);
         pop_camera_state();
