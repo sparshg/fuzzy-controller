@@ -19,6 +19,7 @@ pub struct Graph {
     pub funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
     colors: Vec<Color32>,
     range: Range<f32>,
+    lines: Vec<Vec<[f64; 2]>>,
 }
 
 impl Graph {
@@ -43,8 +44,19 @@ impl Graph {
                 .take(funcs.len())
                 .collect()
             }),
-            funcs,
             range: range.unwrap_or(0.0..1.0),
+            lines: funcs
+                .iter()
+                .map(|(_, f)| {
+                    (0..=100)
+                        .map(|i| {
+                            let x = egui::remap(i as f64, 0.0..=100f64, -0.0..=1.);
+                            [x, f(x as f32) as f64]
+                        })
+                        .collect()
+                })
+                .collect(),
+            funcs,
         }
     }
 
@@ -62,9 +74,10 @@ impl Graph {
                 inner_margin: egui::Margin::same(0.),
                 outer_margin: egui::Margin::same(0.),
                 rounding: egui::Rounding::none(),
-                fill: Color32::from_black_alpha(100),
                 shadow: Shadow::NONE,
-                stroke: egui::Stroke::new(2., Color32::WHITE),
+                // stroke: egui::Stroke::new(2., Color32::WHITE),
+                // fill: Color32::TRANSPARENT,
+                ..Default::default()
             })
             .current_pos(pos)
             .default_size(size)
@@ -116,17 +129,10 @@ impl Graph {
                         }
                         for (i, (_, f)) in self.funcs.iter().enumerate() {
                             plot_ui.line(
-                                Line::new(
-                                    (0..=100)
-                                        .map(|i| {
-                                            let x = egui::remap(i as f64, 0.0..=100f64, -0.0..=1.);
-                                            [x, f(x as f32) as f64]
-                                        })
-                                        .collect::<PlotPoints>(),
-                                )
-                                .width(2.)
-                                .color(self.colors[i])
-                                .name(&self.funcs[i].0),
+                                Line::new(self.lines[i].clone())
+                                    .width(2.)
+                                    .color(self.colors[i])
+                                    .name(&self.funcs[i].0),
                             );
                             if let Some(x) = inp {
                                 memberships[i] = f(x);

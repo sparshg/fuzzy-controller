@@ -207,15 +207,15 @@ async fn main() {
         drone.display(WHITE, 0.05);
 
         let mut fuzzied: HashMap<InputType, Vec<f32>> = HashMap::new();
+        let H = 200.;
+        let W = 250.;
+        let gap = 10.;
+        let title_gap = 0.;
+        let f = (2. * W - gap) / (3. * W);
+        let h = f * H;
+        let w = f * W;
+        let top = 10.;
         egui_macroquad::ui(|ctx: &egui::Context| {
-            let H = 200.;
-            let W = 250.;
-            let gap = 10.;
-            let title_gap = 0.;
-            let f = (2. * W - gap) / (3. * W);
-            let h = f * H;
-            let w = f * W;
-            let top = 10.;
             fuzzied.insert(
                 InputType::Y,
                 m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), false),
@@ -263,6 +263,21 @@ async fn main() {
 
         push_camera_state();
         set_default_camera();
+        draw_rectangle_lines(gap, top, w, h, 4., WHITE);
+        draw_rectangle_lines(w + 2. * gap, top, w, h, 4., WHITE);
+        draw_rectangle_lines(2. * w + 3. * gap, top, w, h, 4., WHITE);
+        draw_rectangle_lines(gap, top + h + gap, w, h, 4., WHITE);
+        draw_rectangle_lines(w + 2. * gap, top + h + gap, w, h, 4., WHITE);
+        draw_rectangle_lines(2. * w + 3. * gap, top + h + gap, w, h, 4., WHITE);
+        draw_rectangle_lines(gap, top + 2. * (h + gap + title_gap), W, H, 4., WHITE);
+        draw_rectangle_lines(
+            W + 2. * gap,
+            top + 2. * (h + gap + title_gap),
+            W,
+            H,
+            4.,
+            WHITE,
+        );
         draw_rules(
             50.,
             (40., 525.),
