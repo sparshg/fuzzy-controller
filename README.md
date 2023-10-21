@@ -1,5 +1,8 @@
 # Fuzzy Drone Controller
 
+## [Try on Web](https://sparshg.github.io/fuzzy-controller/)
+
+
 <img alt="fuzzy" src="https://github.com/sparshg/fuzzy-controller/assets/43041139/9cff3b79-e547-4152-8add-93db8e69804b">
 
 This is a controller that uses [Mamdani Fuzzy inference](https://in.mathworks.com/help/fuzzy/types-of-fuzzy-inference-systems.html) system to control a drone, simulated using a physics engine.
@@ -14,3 +17,9 @@ if x_vel is negative: apply small positive force
 We can further use and, or, not operators on fuzzy sets to create complex rules. To do this I overloaded the bitwise operators on the inputs. This creates a parse tree of the rules, which can be evaluated at the runtime to get the outputs.
 
 To use these abstract or "fuzzy" rules on exact or "crisp" values of inputs, we fuzzify the inputs. For example, a tilt of `1 rad` to the left can be defined as `80% positive` and `20% negative`, according to whatever membership functions we define. We can then apply these fuzzy rules to the fuzzy inputs to get fuzzy outputs. Finally, we defuzzify the fuzzy outputs to get crisp outputs.
+## Build and Run
+
+Install [Rust](https://www.rust-lang.org/tools/install), and then:
+```
+cargo run --release
+```
