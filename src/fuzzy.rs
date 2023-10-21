@@ -2,7 +2,7 @@ use std::{collections::HashMap, fmt::Display, hash::Hash, ops::Range, rc::Rc};
 
 use egui_macroquad::egui::Context;
 
-use crate::{ui::Graph};
+use crate::ui::Graph;
 
 pub struct Fuzzy<V>
 where
@@ -32,7 +32,7 @@ where
             .map(|(&x, y)| (x.to_string(), Rc::clone(y)))
             .collect();
         titles.sort_unstable_by_key(|(s, _)| {
-            let order = "NZLPSM-+";
+            let order = "NZLPSM-0+";
             s.chars()
                 .map(|c| order.find(c).unwrap_or(0) as u8)
                 .collect::<Vec<_>>()
@@ -82,7 +82,13 @@ where
         mx * (self.range.end - self.range.start) + self.range.start
     }
 
-    pub fn draw(&self, ctx: &Context, pos: (f32, f32), size: (f32, f32), is_output: bool) {
+    pub fn draw(
+        &self,
+        ctx: &Context,
+        pos: (f32, f32),
+        size: (f32, f32),
+        is_output: bool,
+    ) -> Vec<f32> {
         self.graph.draw(
             ctx,
             pos,
@@ -97,6 +103,6 @@ where
             } else {
                 None
             },
-        );
+        )
     }
 }

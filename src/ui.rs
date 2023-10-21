@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, ops::Range, rc::Rc};
+use std::{f32::consts::PI, fmt::Display, ops::Range, rc::Rc};
 
 use egui::{
     epaint::Shadow,
@@ -16,7 +16,7 @@ use macroquad_particles::{ColorCurve, Curve};
 use crate::bezier;
 pub struct Graph {
     title: String,
-    funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
+    pub funcs: Vec<(String, Rc<dyn Fn(f32) -> f32>)>,
     colors: Vec<Color32>,
     range: Range<f32>,
 }
@@ -48,20 +48,6 @@ impl Graph {
         }
     }
 
-    // pub fn y(&mut self, y: f32) {
-    //     self.pos.y = y;
-    // }
-
-    // pub fn update(&mut self, track: Vec<f64>) {
-    //     assert!(track.len() == self.history.len());
-    //     for (i, &v) in track.iter().enumerate() {
-    //         self.history[i].push_back(v as f32);
-    //         if self.history[i].len() > self.hsize {
-    //             self.history[i].pop_front();
-    //         }
-    //     }
-    // }
-
     pub fn draw(
         &self,
         ctx: &egui::Context,
@@ -69,13 +55,14 @@ impl Graph {
         size: (f32, f32),
         inp: Option<f32>,
         out: Option<&Vec<(f32, f32)>>,
-    ) {
+    ) -> Vec<f32> {
+        let mut memberships = vec![0.; self.funcs.len()];
         egui::Window::new(&self.title)
             .frame(Frame {
                 inner_margin: egui::Margin::same(0.),
                 outer_margin: egui::Margin::same(0.),
                 rounding: egui::Rounding::none(),
-                fill: Color32::TRANSPARENT,
+                fill: Color32::from_black_alpha(100),
                 shadow: Shadow::NONE,
                 stroke: egui::Stroke::new(2., Color32::WHITE),
             })
@@ -142,6 +129,7 @@ impl Graph {
                                 .name(&self.funcs[i].0),
                             );
                             if let Some(x) = inp {
+                                memberships[i] = f(x);
                                 plot_ui.points(
                                     Points::new([x.clamp(0., 1.) as f64, f(x) as f64])
                                         // .name(format!("Hello"))
@@ -181,6 +169,7 @@ impl Graph {
                     })
                     .response
             });
+        memberships
     }
 }
 
@@ -252,9 +241,99 @@ pub fn draw_blue_grid(grid: f32, color: Color, thickness: f32, bold_every: i32, 
     pop_camera_state();
 }
 
+pub fn draw_rules(
+    spacing: f32,
+    (x, y): (f32, f32),
+    size: (usize, usize),
+    labels: (
+        &[impl Display],
+        &[impl Display],
+        &[impl Display],
+        &[impl Display],
+    ),
+    fuzzied: (&[f32], &[f32], Option<f32>),
+) {
+    // make a grid table of size.0 * size.1 with each square of edge spacing
+
+    let (w, h) = (spacing * size.0 as f32, spacing * size.1 as f32);
+    for i in 0..labels.0.len() {
+        let m = measure_text(&format!("{}", labels.0[i]), None, 16, 1.);
+        draw_text(
+            &format!("{}", labels.0[i]),
+            (x + i as f32 * spacing + spacing / 2. - m.width / 2.).round(),
+            (y - m.height).round(),
+            16.,
+            WHITE,
+        );
+    }
+    for i in 0..labels.1.len() {
+        let m = measure_text(&format!("{}", labels.1[i]), None, 16, 1.);
+        draw_text(
+            &format!("{}", labels.1[i]),
+            (x - m.width - 8.).round(),
+            (y + i as f32 * spacing + spacing / 2.).round(),
+            16.,
+            WHITE,
+        );
+    }
+    for i in 0..size.0 {
+        for j in 0..size.1 {
+            let m = measure_text(&format!("{}", labels.2[i * size.1 + j]), None, 24, 1.);
+            let font = Font::default();
+            font.set_filter(FilterMode::Nearest);
+            let c = (fuzzied.0[i]
+                .min(fuzzied.1[j])
+                .min(fuzzied.2.unwrap_or_else(|| 1.))
+                * 255.) as u8;
+
+            draw_text_ex(
+                &format!("{}", labels.2[i * size.1 + j]),
+                (x + (i as f32 + 0.5) * spacing - m.width / 2.).round(),
+                (y + (j as f32 + 0.5) * spacing + m.height / 2.).round(),
+                TextParams {
+                    font_size: 24_u16,
+                    font_scale: 1.0,
+                    font,
+                    color: Color::from_rgba(0, c, c, 255),
+                    ..Default::default()
+                },
+            );
+        }
+    }
+    for i in 0..labels.3.len() {
+        let m = measure_text(&format!("{}", labels.3[i]), None, 16, 1.);
+        draw_text(
+            &format!("{}", labels.3[i]),
+            (x + (w - m.width - (labels.3.len() - 1) as f32 * spacing) / 2. + i as f32 * spacing)
+                .round(),
+            (y + h + m.height + 8.).round(),
+            16.,
+            WHITE,
+        );
+    }
+    for i in 0..=size.0 {
+        draw_line(
+            x + i as f32 * spacing,
+            y,
+            x + i as f32 * spacing,
+            y + h,
+            2.,
+            WHITE,
+        );
+    }
+    for i in 0..=size.1 {
+        draw_line(
+            x,
+            y + i as f32 * spacing,
+            x + w,
+            y + i as f32 * spacing,
+            2.,
+            WHITE,
+        );
+    }
+}
+
 pub fn draw_vingette(tex: Texture2D) {
-    push_camera_state();
-    set_default_camera();
     draw_texture_ex(
         tex,
         0.,
@@ -265,7 +344,7 @@ pub fn draw_vingette(tex: Texture2D) {
             ..Default::default()
         },
     );
-    pop_camera_state();
+    // pop_camera_state();
 }
 
 pub fn draw_title(ctx: &egui::Context) {

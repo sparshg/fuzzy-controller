@@ -15,11 +15,14 @@ use macroquad::prelude::*;
 use macroquad_particles::{Emitter, EmitterConfig};
 use mamdani::Mamdani;
 use std::collections::HashMap;
-use ui::{draw_blue_grid, draw_title, smoke};
+use ui::{draw_blue_grid, smoke};
 
 use rules::{Amp, Diff, InputType, Inputs, Outputs, Th, Vx, Vy, W, X, Y};
 
-use crate::rules::Rule;
+use crate::{
+    rules::Rule,
+    ui::{draw_rules, draw_vingette},
+};
 
 fn window_conf() -> Conf {
     Conf {
@@ -52,6 +55,15 @@ async fn main() {
     let (vxn, vxp) = (Inputs::Vx(Vx::N), Inputs::Vx(Vx::P));
     let (thn, thz, thp) = (Inputs::Th(Th::N), Inputs::Th(Th::Z), Inputs::Th(Th::P));
     let (wn, wp) = (Inputs::W(W::N), Inputs::W(W::P));
+    let (nl, nm, ns, z, ps, pm, pl) = (
+        Outputs::Diff(Diff::NL),
+        Outputs::Diff(Diff::NM),
+        Outputs::Diff(Diff::NS),
+        Outputs::Diff(Diff::Z),
+        Outputs::Diff(Diff::PS),
+        Outputs::Diff(Diff::PM),
+        Outputs::Diff(Diff::PL),
+    );
     let mut m = Mamdani {
         rules: vec![
             (Outputs::Amp(Amp::Z), yp & vyp),
@@ -116,65 +128,13 @@ async fn main() {
 
     let mut m2 = Mamdani {
         rules: vec![
-            // (Outputs::Diff(Diff::NL), thp & xn & wp & vxn),
-            // (
-            //     Outputs::Diff(Diff::NM),
-            //     xn & (wp & (thn & vxn | thp & vxp) | wn & thp & vxn),
-            // ),
-            // (
-            //     Outputs::Diff(Diff::NS),
-            //     xn & (wn & (thn & vxn | thp & vxp) | wp & thn & vxp) | xp & thp & wp & vxn,
-            // ),
-            // (
-            //     Outputs::Diff(Diff::PS),
-            //     xp & (wp & (thp & vxp | thn & vxn) | wn & thp & vxn) | xn & thn & wn & vxp,
-            // ),
-            // (
-            //     Outputs::Diff(Diff::PM),
-            //     xp & (wn & (thp & vxp | thn & vxn) | wp & thn & vxp),
-            // ),
-            // (Outputs::Diff(Diff::PL), thn & xp & wn & vxp),
-            (Outputs::Diff(Diff::NL), r(&tn, 6) | r(&tn, 3)),
-            (
-                Outputs::Diff(Diff::NM),
-                r(&tn, 8) | r(&tp, 6) | r(&tp, 7) | r(&tn, 7),
-            ),
-            (
-                Outputs::Diff(Diff::NS),
-                r(&tp, 3) | r(&tp, 8) | r(&tn, 4) | wp,
-            ),
-            (Outputs::Diff(Diff::Z), xz & thz),
-            (
-                Outputs::Diff(Diff::PS),
-                r(&tp, 4) | r(&tn, 5) | r(&tn, 0) | wn,
-            ),
-            (
-                Outputs::Diff(Diff::PM),
-                r(&tp, 0) | r(&tp, 1) | r(&tn, 2) | r(&tn, 1),
-            ),
-            (Outputs::Diff(Diff::PL), r(&tp, 5) | r(&tp, 2)),
-            // (Outputs::Diff(Diff::NL), vxn & thp & xn),
-            // (Outputs::Diff(Diff::NM), vxp & thp | vxn & thp & (xz | xp)),
-            // (Outputs::Diff(Diff::NS), thz & xn | vxn & thz & xz | wp),
-            // (Outputs::Diff(Diff::Z), xz & thz),
-            // (Outputs::Diff(Diff::PS), thz & xp | vxp & thz & xz | wn),
-            // (Outputs::Diff(Diff::PM), vxn & thn | vxp & thn & (xz | xn)),
-            // (Outputs::Diff(Diff::PL), vxp & thn & xp),
-
-            // (Outputs::Diff(Diff::NL), xn & thp),
-            // (Outputs::Diff(Diff::NM), xz & thp),
-            // (Outputs::Diff(Diff::NS), xn & (thn | thz)),
-            // (Outputs::Diff(Diff::Z), xz & thz),
-            // (Outputs::Diff(Diff::PS), xp & (thp | thz)),
-            // (Outputs::Diff(Diff::PM), xz & thn),
-            // (Outputs::Diff(Diff::PL), xp & thn),
-
-            // (Outputs::Diff(Diff::NL), thp & vxn & wp & (xp | xn)),
-            // (Outputs::Diff(Diff::NM), wp & (vxp & thp | vxn & thn & xp)),
-            // (Outputs::Diff(Diff::NS), xn & vxn & (thn & wp | thp & wn)),
-            // (Outputs::Diff(Diff::PS), xp & vxp & (thn & wp | thp & wn)),
-            // (Outputs::Diff(Diff::PM), wn & (vxn & thn | vxp & thp & xn)),
-            // (Outputs::Diff(Diff::PL), thn & vxp & wn & (xp | xn)),
+            (nl, r(&tn, 6) | r(&tn, 3)),
+            (nm, r(&tn, 8) | r(&tp, 6) | r(&tp, 7) | r(&tn, 7)),
+            (ns, r(&tp, 3) | r(&tp, 8) | r(&tn, 4) | wp),
+            (z, xz & thz),
+            (ps, r(&tp, 4) | r(&tn, 5) | r(&tn, 0) | wn),
+            (pm, r(&tp, 0) | r(&tp, 1) | r(&tn, 2) | r(&tn, 1)),
+            (pl, r(&tp, 5) | r(&tp, 2)),
         ],
         inputs: HashMap::from([
             (
@@ -234,7 +194,7 @@ async fn main() {
     };
 
     let mut drone = Drone::new(e1, e2);
-    let _vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
+    let vingette = Texture2D::from_file_with_format(include_bytes!("../vingette.png"), None);
 
     loop {
         if is_key_down(KeyCode::Escape) || is_key_down(KeyCode::Q) {
@@ -242,10 +202,11 @@ async fn main() {
         }
 
         clear_background(BLACK);
-        draw_blue_grid(0.075, DARKGRAY, 0.001, 6, 0.003);
+        draw_blue_grid(0.075, DARKGRAY, 0.001, 6, 0.002);
         drone.update(&mut m, &mut m2, get_frame_time());
         drone.display(WHITE, 0.05);
-        // draw_ui(1280., &gr, &gr2);
+
+        let mut fuzzied: HashMap<InputType, Vec<f32>> = HashMap::new();
         egui_macroquad::ui(|ctx: &egui::Context| {
             let H = 200.;
             let W = 250.;
@@ -254,22 +215,40 @@ async fn main() {
             let f = (2. * W - gap) / (3. * W);
             let h = f * H;
             let w = f * W;
-            let top = screen_height() * 0.5 - (gap + h + H * 0.5);
-            m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), false);
-            m2.inputs[&InputType::X].draw(ctx, (w + 2. * gap, top), (w, h), false);
-            m2.inputs[&InputType::Th].draw(ctx, (2. * w + 3. * gap, top), (w, h), false);
-            m.inputs[&InputType::Vy].draw(ctx, (gap, top + h + gap + title_gap), (w, h), false);
-            m2.inputs[&InputType::Vx].draw(
-                ctx,
-                (w + 2. * gap, top + h + gap + title_gap),
-                (w, h),
-                false,
+            let top = 10.;
+            fuzzied.insert(
+                InputType::Y,
+                m.inputs[&InputType::Y].draw(ctx, (gap, top), (w, h), false),
             );
-            m2.inputs[&InputType::W].draw(
-                ctx,
-                (2. * w + 3. * gap, top + h + gap + title_gap),
-                (w, h),
-                false,
+            fuzzied.insert(
+                InputType::X,
+                m2.inputs[&InputType::X].draw(ctx, (w + 2. * gap, top), (w, h), false),
+            );
+            fuzzied.insert(
+                InputType::Th,
+                m2.inputs[&InputType::Th].draw(ctx, (2. * w + 3. * gap, top), (w, h), false),
+            );
+            fuzzied.insert(
+                InputType::Vy,
+                m.inputs[&InputType::Vy].draw(ctx, (gap, top + h + gap + title_gap), (w, h), false),
+            );
+            fuzzied.insert(
+                InputType::Vx,
+                m2.inputs[&InputType::Vx].draw(
+                    ctx,
+                    (w + 2. * gap, top + h + gap + title_gap),
+                    (w, h),
+                    false,
+                ),
+            );
+            fuzzied.insert(
+                InputType::W,
+                m2.inputs[&InputType::W].draw(
+                    ctx,
+                    (2. * w + 3. * gap, top + h + gap + title_gap),
+                    (w, h),
+                    false,
+                ),
             );
             m.output
                 .draw(ctx, (gap, top + 2. * (h + gap + title_gap)), (W, H), true);
@@ -279,11 +258,77 @@ async fn main() {
                 (W, H),
                 true,
             );
-            draw_title(ctx);
-            // .ui(ctx);
         });
+        // println!("{:?}", fuzzied);
+        // panic!("");
         egui_macroquad::draw();
-        // draw_vingette(vingette);
+
+        push_camera_state();
+        set_default_camera();
+        draw_rules(
+            50.,
+            (40., 525.),
+            (3, 3),
+            (
+                &[xn, xz, xp],
+                &[thn, thz, thp],
+                &[pm, pm, pl, ns, ps, pl, nm, nm, ns],
+                &[vxp],
+            ),
+            (
+                &fuzzied[&InputType::X],
+                &fuzzied[&InputType::Th],
+                Some(fuzzied[&InputType::Vx][1]),
+            ),
+        );
+        draw_rules(
+            50.,
+            (230., 525.),
+            (3, 3),
+            (
+                &[xn, xz, xp],
+                &[thn, thz, thp],
+                &[ps, pm, pm, nl, ns, ps, nl, nm, nm],
+                &[vxn],
+            ),
+            (
+                &fuzzied[&InputType::X],
+                &fuzzied[&InputType::Th],
+                Some(fuzzied[&InputType::Vx][0]),
+            ),
+        );
+        draw_rules(
+            50.,
+            (420., 520.),
+            (2, 2),
+            (
+                &[vyn, vyp],
+                &[yn, yp],
+                &[
+                    Outputs::Amp(Amp::L),
+                    Outputs::Amp(Amp::S),
+                    Outputs::Amp(Amp::S),
+                    Outputs::Amp(Amp::Z),
+                ],
+                &[""],
+            ),
+            (&fuzzied[&InputType::Vy], &fuzzied[&InputType::Y], None),
+        );
+
+        draw_rules(
+            50.,
+            (420., 630.),
+            (2, 1),
+            (&[""], &[""], &[ns, ps], &[wp, wn]),
+            (&fuzzied[&InputType::W], &[1.], None),
+        );
+
+        // draw_rules(50., (200., 500.), (3, 3));
+        // draw_rules(50., (390., 500.), (2, 2));
+        // if is_key_down(KeyCode::Space) {
+        draw_vingette(vingette);
+        // }
+        pop_camera_state();
         next_frame().await;
     }
 }
