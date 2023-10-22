@@ -3,7 +3,6 @@ mod drone;
 mod funcs;
 mod fuzzy;
 mod mamdani;
-mod pid;
 mod rules;
 mod state;
 mod ui;

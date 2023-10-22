@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use crate::mamdani::Mamdani;
-use crate::{pid::PID, rules::InputType, state::State};
+use crate::{rules::InputType, state::State};
 use macroquad::prelude::*;
 use macroquad_particles::Emitter;
 
