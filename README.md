@@ -5,6 +5,61 @@
 
 <img alt="fuzzy" src="https://github.com/sparshg/fuzzy-controller/assets/43041139/9cff3b79-e547-4152-8add-93db8e69804b">
 
+## Notation Used
+
+I have used these symbols throughout for the controllers, more information in the next section:
+
+Controller 1 (Contols `amplitude`):
+
+<table>
+<tr><th>Inputs</th><th>Outputs</th></tr>
+<tr><td>
+
+|  |            |
+| :----: | :--------: |
+| Y      | Y Position Error|
+| Vy     | Y Velocity |
+
+</td><td>
+  
+|  |            |
+| :----: | :--------: |
+|Z| Zero thrust amplitude|
+|S| Small thrust amplitude|
+|L| Large thrust amplitude|
+
+</td></tr> </table>
+
+Controller 2 (Contols `diff`)
+
+<table>
+<tr><th>Inputs</th><th>Outputs</th></tr>
+<tr><td>
+  
+|  |            |
+| :----: | :--------: |
+|X| X Position Error|
+|Vx| X Velocity|
+|Th| Angle from horizontal|
+|W| Angular velocity|
+
+</td><td>
+
+|  |            |
+| :----: | :--------: |
+| Z| Zero|
+| NS/PS| Small (-/+) thrust difference|
+| NM/PM| Medium (-/+) thrust difference|
+| NL/PL| Large (-/+) thrust difference|
+
+</td></tr> </table>
+
+
+where Positive is the anti-clockwise direction
+and Negative is the clockwise direction
+
+## Working
+
 This is a controller that uses [Mamdani Fuzzy inference](https://in.mathworks.com/help/fuzzy/types-of-fuzzy-inference-systems.html) system to control a drone, simulated using a physics engine.
 
 The drone has 2 thrusters controlled by 2 fuzzy controllers. The controllers analyze the current state of the system and output the required thrust for each thruster. One takes the `(y_pos, y_vel)` and computes an `amplitude`. The other one takes `(x_pos, x_vel, angle, ang_vel)` and computes a `diff`. Then the thrusters are assigned the forces given by `amplitude + diff` and `amplitude - diff`.
